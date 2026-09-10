@@ -574,6 +574,7 @@ resultado <- dbGetQuery(con, "
 resultado
 sqrt(resultado)
 ```
+aqui estan los dos
 
 ```{r}
 resultado1 <- dbGetQuery(con, "
