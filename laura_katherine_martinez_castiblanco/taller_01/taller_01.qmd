@@ -510,11 +510,41 @@ resultado_seguro
 # 13. Ejercicio de clase
 
 ```{r }
+library(httr)
 
+url_base <- "https://www.accuweather.com/"
+robots_url <- paste0(url_base, "robots.txt")
+
+# Petición GET forzando HTTP/1.1 y con User-Agent de navegador
+respuesta_robots <- GET(
+  robots_url,
+  add_headers(`User-Agent` = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
+  config(http_version = 2) # En curl, el valor 2 fuerza el uso de HTTP/1.1
+)
+
+# Imprimir el contenido de robots.txt
+if (status_code(respuesta_robots) == 200) {
+  cat(content(respuesta_robots, as = "text", encoding = "UTF-8"))
+} else {
+  print(paste("Error en la solicitud. Código:", status_code(respuesta_robots)))
+}
 ```
 
 ```{r }
+# Instalar si no lo tienes
+if (!require("robotstxt")) install.packages("robotstxt")
+library(robotstxt)
 
+# 1. Obtener y mostrar el archivo robots.txt completo
+robots_texto <- get_robotstxt("https://www.accuweather.com")
+cat(robots_texto)
+
+# 2. Comprobar directamente si una ruta específica está permitida para un bot
+paths_allowed(
+  domain = "https://www.accuweather.com",
+  path = "/es/co/bogota/107060/weather-forecast/107060",
+  user_agent = "*"
+)
 ```
 
 ```{r }
