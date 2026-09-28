@@ -1,0 +1,10 @@
+supermercado,marca,termino,estado,n_productos
+Éxito,Michelob,michelob,error: Chromote: timed out waiting for event Page.loadEventFired,0
+Éxito,Stella Artois,stella artois,ok,5
+Éxito,Club Colombia,club colombia,ok,15
+Carulla,Michelob,michelob,ok,11
+Carulla,Stella Artois,stella artois,ok,5
+Carulla,Club Colombia,club colombia,ok,13
+Jumbo,Michelob,michelob,error: Chromote: timed out waiting for event Page.loadEventFired,0
+Jumbo,Stella Artois,stella artois,ok,5
+Jumbo,Club Colombia,club colombia,ok,10

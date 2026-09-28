@@ -1,5 +1,5 @@
 ---
-title: "Taller 2 - Parte 1"
+title: "Taller 2 - Taller práctico de SQL Parte 1"
 author: "Laura Katherine Martinez Castiblanco"
 output:
   html_document:
