@@ -1,0 +1,100 @@
+---
+title: "Taller 1"
+author: "Tu Nombre"
+output:
+  html_document:
+    theme: null
+    css: styles.css
+    includes:
+      in_header: header.html
+      after_body: sidebar.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.align = "center")
+library(tidyverse)
+library(DBI)
+library(RSQLite)
+library(DT)
+library(knitr)
+
+# Función estandarizada para tablas interactivas con paginador y filtros por columna
+crear_tabla_dt <- function(df, caption = NULL) {
+  datatable(
+    df,
+    caption = caption,
+    filter = 'top', # Filtros por columna en la parte superior
+    options = list(
+      pageLength = 10,
+      autoWidth = TRUE,
+      language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
+    ),
+    class = 'cell-border stripe hover'
+  )
+}
+```
+
+```{r carga_codigo_scraper, echo=FALSE, results='asis'}
+# Carga invisible del código externo para ser alimentado al Modal sin ensuciar la vista
+if(file.exists("scraper.R")) {
+  code <- paste(readLines("scraper.R"), collapse="\n")
+  cat('<div id="scraper-code-content" style="display:none;"><pre><code class="language-r">', code, '</code></pre></div>')
+} else {
+  cat('<div id="scraper-code-content" style="display:none;"><p class="text-danger">Archivo scraper.R no encontrado.</p></div>')
+}
+```
+
+<!-- ESTRUCTURA PRINCIPAL DE PESTAÑAS (100% SINTAXIS MARKDOWN) -->
+
+# {.tab-content}
+
+## Visión General {#sec-overview .tab-pane .fade .show .active role="tabpanel"}
+
+### Objetivos del Proyecto
+Este reporte presenta el desarrollo del **Taller 1 de Minería de Datos**, enfocado en la fase de adquisición y preparación de datos para un comparador de precios en tiendas de comercio electrónico de Colombia.
+
+---
+
+## Web Scraping {#sec-scraping .tab-pane .fade role="tabpanel"}
+
+### Evidencia del Proceso de Extracción
+A continuación se presentan las capturas de pantalla que documentan la inspección de elementos HTML/JSON y las ejecuciones del proceso de extracción:
+
+::: {style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;"}
+![Inspección DOM Tienda 1](img/evidencia_tienda1.png){width=100%}
+![Petición HTTP / API Tienda 2](img/evidencia_tienda2.png){width=100%}
+:::
+
+---
+
+## Limpieza de Datos {#sec-preparacion .tab-pane .fade role="tabpanel"}
+
+### Normalización y Mapeo de Productos
+Proceso de transformación para homologar nombres de productos, eliminar símbolos monetarios y calcular el precio unitario estandarizado.
+
+---
+
+## Base SQLite & DT {#sec-sqlite .tab-pane .fade role="tabpanel"}
+
+### Registros Almacenados en SQLite
+Tabla interactiva con paginación integrada, buscador general y filtros por columna:
+
+```{r mostrar_base_datos}
+# Ejemplo de visualización interactiva
+# con <- dbConnect(RSQLite::SQLite(), "comparador_precios.sqlite")
+# datos <- dbReadTable(con, "precios_productos")
+# crear_tabla_dt(datos, "Historico de Precios Extraídos")
+```
+
+---
+
+## Análisis & SQL {#sec-analisis .tab-pane .fade role="tabpanel"}
+
+### Consultas de Negocio y Comparativa de Oferta
+
+#### Consulta SQL: Productos con Mejor Precio Unitario
+```sql
+SELECT comercio, producto, MIN(precio_unidad_medida) AS mejor_precio
+FROM precios_productos
+GROUP BY producto;
+```
