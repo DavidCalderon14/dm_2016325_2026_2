@@ -97,4 +97,4 @@ Las consultas del informe siguen la notación del taller de SQL de la clase: `IN
 
 ## Cumplimiento ético
 
-Pausa de 1 segundo entre peticiones, reintentos limitados, *user agent* que identifica el uso académico y consulta únicamente de información pública. Revisión de `robots.txt` y términos de uso de los tres sitios: **[COMPLETAR]**. Prueba desde otro entorno (Colab/GitHub Actions): **[COMPLETAR]**.
+Pausa de 1 segundo entre peticiones a las tiendas VTEX y de varios segundos entre acciones en Farmatodo, reintentos limitados, *user agent* que identifica el uso académico en las peticiones HTTP, y consulta únicamente de páginas públicas de categoría. Se revisaron el `robots.txt` y los términos de los tres sitios: ninguna ruta consultada está bloqueada (detalle en el informe, sección «Cumplimiento»). Prueba desde otro entorno (Colab/GitHub Actions): **[COMPLETAR]**.

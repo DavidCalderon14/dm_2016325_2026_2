@@ -59,19 +59,30 @@ La Rebaja y Locatel declaran el total de productos de la sección en la cabecera
 
 ## Buenas prácticas aplicadas
 
-- Pausa de 1 segundo entre peticiones (`Sys.sleep()`), reintentos ante fallos y un *user agent* que identifica el uso académico.
+- Pausa de 1 segundo entre peticiones a las tiendas VTEX y de varios segundos entre acciones en Farmatodo, reintentos ante fallos y un *user agent* que identifica el uso académico en las peticiones HTTP a La Rebaja y Locatel. En Farmatodo, el navegador automatizado usa el *user agent* propio de Chrome.
 - Conservación del **texto original** de cada anuncio (nombre, marca, presentación y precio tal como se muestran); la limpieza se hace en columnas aparte.
 - **Copia cruda** de cada respuesta (HTML o JSON, comprimida con gzip) en `raw/<comercio>/<fecha>/`, y modo sin conexión que reprocesa esas copias.
 - Fecha y hora de consulta (ISO 8601, hora de Colombia) en todas las observaciones.
 - Una tabla de ejecuciones que registra cada corrida con su estado (completa, parcial o fallida).
 
+## Cumplimiento: `robots.txt` y términos de uso
+
+Se revisaron el `robots.txt` y los términos de cada sitio en octubre de 2026.
+
+| Comercio | `robots.txt` | Rutas que usa el código | Términos revisados |
+|---|---|---|---|
+| Farmatodo | Para todos los agentes bloquea `/checkout*`, `/cuenta/*`, `/buscar*`, `/busqueda*`, `/sugeridos*`, `/destacados*` y `/producto/*/review`, y prohíbe todo a los agentes «Scrapy 2.7.1» y «Scrapy 2.8.0». No fija pausa entre peticiones. | Páginas de categoría de *Botiquín y primeros auxilios* (no bloqueadas). No usa la búsqueda ni abre fichas de producto. | No mencionan la extracción automatizada. Prohíben la ingeniería inversa del código o los algoritmos del sitio (cláusula 5, vi), que no se realiza, y reservan los derechos sobre imágenes y texto (cláusula 11), por lo que no se descargan imágenes. Advierten que los precios pueden contener errores y diferir de los de las tiendas físicas (cláusulas 15.1 y 16). |
+| La Rebaja | Bloquea `/account/*`, `/login/*`, `/checkout/*`, `/busca/*`, `/quick-view/*`, `/espiar/*` y `/cloxaquim`. No menciona `/api/`. | Sección `/drogueria/cuidado-de-la-herida` y el servicio de catálogo `/api/catalog_system/pub/products/search/` (no bloqueados). | Los términos y condiciones generales no mencionan la extracción automatizada. Indican que los precios del sitio difieren de los de los puntos de venta y varían según la ciudad de entrega o recogida, y que pueden modificarse en cualquier momento. |
+| Locatel | Bloquea áreas del sistema (`/account`, `/checkout/`, `/busca`, `/search`, `/_v/`, entre otras), parámetros de retorno y rangos de precio. No menciona `/api/` ni `/drogueria/`. | Sección `/drogueria/cuidado-heridas` y el mismo servicio de catálogo (no bloqueados). | La página de políticas comerciales (envíos, financiación y campañas) no trata la extracción automatizada. |
+
+Ninguna de las rutas consultadas está bloqueada por el `robots.txt` de su sitio. Los términos revisados no prohíben expresamente la consulta automatizada de información pública del catálogo, pero tampoco la autorizan. Por eso la extracción se limitó a lo necesario para el taller: solo páginas públicas de categoría (sin iniciar sesión, sin carrito ni búsqueda), a un ritmo bajo (unas decenas de peticiones por ejecución), sin descargar imágenes y con fines exclusivamente académicos. Farmatodo bloquea expresamente a los rastreadores Scrapy, lo que indica que no desea el rastreo masivo con esa herramienta; este trabajo no usa Scrapy ni rastrea el sitio, sino que lee unas pocas páginas de categoría con baja frecuencia.
+
 ::: {.callout-warning}
 **Pendiente de completar por el autor:**
 
-1. La **delimitación de la categoría** tal como figura en la planilla «Categorías de Productos - Estudiantes» (pegar aquí el texto de la planilla).
-2. El resultado de revisar el archivo `robots.txt` y los términos de uso de los tres sitios (`/robots.txt` de cada dominio).
-3. La **ciudad** con la que se compararon los precios en el navegador.
-4. El resultado de **probar el código desde otro entorno** (por ejemplo Google Colab), que el enunciado sugiere reportar.
+1. La **delimitación de la categoría** tal como figura en la planilla «Categorías de Productos - Estudiantes».
+2. La **ciudad** con la que se compararon los precios en el navegador.
+3. El resultado de **probar el código desde otro entorno** (por ejemplo Google Colab).
 :::
 
 ---
@@ -695,6 +706,9 @@ En la fecha de referencia (**`r fecha_ref`**), **`r names(which.max(ganadores))`
 # Limitaciones
 
 - **Fecha y condiciones de captura.** Los precios son los observados en el momento de la consulta. Los tres comercios usan campañas y descuentos temporales: por ejemplo, un mismo producto apareció con precio tachado y descuento de 10 % en el servicio de La Rebaja. Además, los sitios advierten que los precios pueden variar según la ciudad de entrega, y la consulta no fijó una ciudad.
+
+Además, las ejecuciones coincidieron con campañas comerciales publicadas por los propios comercios: Locatel anuncia en su página de políticas comerciales «Descuentos 1Q» (1 al 15 de octubre de 2026), «Cuidado Personal» (8 al 10) y «Segunda unidad con el 50 %» (9 y 10), y aclara que sus descuentos se aplican sobre el precio máximo de venta al público. Las diferencias de precio entre las ejecuciones del 07 y el 09 de octubre pueden deberse a esas campañas y no a cambios del precio regular.
+
 - **Correspondencia de productos.** Con EAN se verificó el mismo producto entre La Rebaja y Locatel, pero Farmatodo no publica EAN en el listado, y la equivalencia con ese comercio se basa en marca, producto y contenido.
 - **Contenido.** El campo de medida del sitio no siempre es el contenido real (en Locatel, una venda de "1x5 yardas" figuraba con 17 g), así que el contenido de los comparables se verificó a mano contra el nombre.
 - **Cobertura.** Locatel no tiene una subcategoría de antisépticos dentro de su sección de heridas, por lo que su oferta de esa familia queda subrepresentada. Las exclusiones (por ejemplo ostomías, guantes y jeringas) siguen reglas explícitas, que pueden discutirse.

@@ -2214,6 +2214,7 @@ vertical-align: -.125em;
   <li><a href="#comercios-consultados" id="toc-comercios-consultados" class="nav-link" data-scroll-target="#comercios-consultados"><span class="header-section-number">2.1</span> Comercios consultados</a></li>
   <li><a href="#estrategia-de-extracción-y-selectores" id="toc-estrategia-de-extracción-y-selectores" class="nav-link" data-scroll-target="#estrategia-de-extracción-y-selectores"><span class="header-section-number">2.2</span> Estrategia de extracción y selectores</a></li>
   <li><a href="#buenas-prácticas-aplicadas" id="toc-buenas-prácticas-aplicadas" class="nav-link" data-scroll-target="#buenas-prácticas-aplicadas"><span class="header-section-number">2.3</span> Buenas prácticas aplicadas</a></li>
+  <li><a href="#cumplimiento-robots.txt-y-términos-de-uso" id="toc-cumplimiento-robots.txt-y-términos-de-uso" class="nav-link" data-scroll-target="#cumplimiento-robots.txt-y-términos-de-uso"><span class="header-section-number">2.4</span> Cumplimiento: <code>robots.txt</code> y términos de uso</a></li>
   </ul></li>
   <li><a href="#recolección-y-carga" id="toc-recolección-y-carga" class="nav-link" data-scroll-target="#recolección-y-carga"><span class="header-section-number">3</span> Recolección y carga</a></li>
   <li><a href="#base-de-datos-sqlite" id="toc-base-de-datos-sqlite" class="nav-link" data-scroll-target="#base-de-datos-sqlite"><span class="header-section-number">4</span> Base de datos SQLite</a>
@@ -2372,12 +2373,53 @@ vertical-align: -.125em;
 <section id="buenas-prácticas-aplicadas" class="level2" data-number="2.3">
 <h2 data-number="2.3" class="anchored" data-anchor-id="buenas-prácticas-aplicadas"><span class="header-section-number">2.3</span> Buenas prácticas aplicadas</h2>
 <ul>
-<li>Pausa de 1 segundo entre peticiones (<code>Sys.sleep()</code>), reintentos ante fallos y un <em>user agent</em> que identifica el uso académico.</li>
+<li>Pausa de 1 segundo entre peticiones a las tiendas VTEX y de varios segundos entre acciones en Farmatodo, reintentos ante fallos y un <em>user agent</em> que identifica el uso académico en las peticiones HTTP a La Rebaja y Locatel. En Farmatodo, el navegador automatizado usa el <em>user agent</em> propio de Chrome.</li>
 <li>Conservación del <strong>texto original</strong> de cada anuncio (nombre, marca, presentación y precio tal como se muestran); la limpieza se hace en columnas aparte.</li>
 <li><strong>Copia cruda</strong> de cada respuesta (HTML o JSON, comprimida con gzip) en <code>raw/&lt;comercio&gt;/&lt;fecha&gt;/</code>, y modo sin conexión que reprocesa esas copias.</li>
 <li>Fecha y hora de consulta (ISO 8601, hora de Colombia) en todas las observaciones.</li>
 <li>Una tabla de ejecuciones que registra cada corrida con su estado (completa, parcial o fallida).</li>
 </ul>
+</section>
+<section id="cumplimiento-robots.txt-y-términos-de-uso" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="cumplimiento-robots.txt-y-términos-de-uso"><span class="header-section-number">2.4</span> Cumplimiento: <code>robots.txt</code> y términos de uso</h2>
+<p>Se revisaron el <code>robots.txt</code> y los términos de cada sitio en octubre de 2026.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Comercio</th>
+<th><code>robots.txt</code></th>
+<th>Rutas que usa el código</th>
+<th>Términos revisados</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Farmatodo</td>
+<td>Para todos los agentes bloquea <code>/checkout*</code>, <code>/cuenta/*</code>, <code>/buscar*</code>, <code>/busqueda*</code>, <code>/sugeridos*</code>, <code>/destacados*</code> y <code>/producto/*/review</code>, y prohíbe todo a los agentes «Scrapy 2.7.1» y «Scrapy 2.8.0». No fija pausa entre peticiones.</td>
+<td>Páginas de categoría de <em>Botiquín y primeros auxilios</em> (no bloqueadas). No usa la búsqueda ni abre fichas de producto.</td>
+<td>No mencionan la extracción automatizada. Prohíben la ingeniería inversa del código o los algoritmos del sitio (cláusula 5, vi), que no se realiza, y reservan los derechos sobre imágenes y texto (cláusula 11), por lo que no se descargan imágenes. Advierten que los precios pueden contener errores y diferir de los de las tiendas físicas (cláusulas 15.1 y 16).</td>
+</tr>
+<tr class="even">
+<td>La Rebaja</td>
+<td>Bloquea <code>/account/*</code>, <code>/login/*</code>, <code>/checkout/*</code>, <code>/busca/*</code>, <code>/quick-view/*</code>, <code>/espiar/*</code> y <code>/cloxaquim</code>. No menciona <code>/api/</code>.</td>
+<td>Sección <code>/drogueria/cuidado-de-la-herida</code> y el servicio de catálogo <code>/api/catalog_system/pub/products/search/</code> (no bloqueados).</td>
+<td>Los términos y condiciones generales no mencionan la extracción automatizada. Indican que los precios del sitio difieren de los de los puntos de venta y varían según la ciudad de entrega o recogida, y que pueden modificarse en cualquier momento.</td>
+</tr>
+<tr class="odd">
+<td>Locatel</td>
+<td>Bloquea áreas del sistema (<code>/account</code>, <code>/checkout/</code>, <code>/busca</code>, <code>/search</code>, <code>/_v/</code>, entre otras), parámetros de retorno y rangos de precio. No menciona <code>/api/</code> ni <code>/drogueria/</code>.</td>
+<td>Sección <code>/drogueria/cuidado-heridas</code> y el mismo servicio de catálogo (no bloqueados).</td>
+<td>La página de políticas comerciales (envíos, financiación y campañas) no trata la extracción automatizada.</td>
+</tr>
+</tbody>
+</table>
+<p>Ninguna de las rutas consultadas está bloqueada por el <code>robots.txt</code> de su sitio. Los términos revisados no prohíben expresamente la consulta automatizada de información pública del catálogo, pero tampoco la autorizan. Por eso la extracción se limitó a lo necesario para el taller: solo páginas públicas de categoría (sin iniciar sesión, sin carrito ni búsqueda), a un ritmo bajo (unas decenas de peticiones por ejecución), sin descargar imágenes y con fines exclusivamente académicos. Farmatodo bloquea expresamente a los rastreadores Scrapy, lo que indica que no desea el rastreo masivo con esa herramienta; este trabajo no usa Scrapy ni rastrea el sitio, sino que lee unas pocas páginas de categoría con baja frecuencia.</p>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2390,10 +2432,9 @@ Advertencia
 <div class="callout-body-container callout-body">
 <p><strong>Pendiente de completar por el autor:</strong></p>
 <ol type="1">
-<li>La <strong>delimitación de la categoría</strong> tal como figura en la planilla «Categorías de Productos - Estudiantes» (pegar aquí el texto de la planilla).</li>
-<li>El resultado de revisar el archivo <code>robots.txt</code> y los términos de uso de los tres sitios (<code>/robots.txt</code> de cada dominio).</li>
+<li>La <strong>delimitación de la categoría</strong> tal como figura en la planilla «Categorías de Productos - Estudiantes».</li>
 <li>La <strong>ciudad</strong> con la que se compararon los precios en el navegador.</li>
-<li>El resultado de <strong>probar el código desde otro entorno</strong> (por ejemplo Google Colab), que el enunciado sugiere reportar.</li>
+<li>El resultado de <strong>probar el código desde otro entorno</strong> (por ejemplo Google Colab).</li>
 </ol>
 </div>
 </div>
@@ -2503,7 +2544,7 @@ Advertencia
 <tr class="odd">
 <td style="text-align: left;">farmatodo_2026-10-10</td>
 <td style="text-align: left;">Farmatodo</td>
-<td style="text-align: left;">2026-10-10T09:52:52-05:00</td>
+<td style="text-align: left;">2026-10-10T15:32:27-05:00</td>
 <td style="text-align: right;">161</td>
 <td style="text-align: right;">161</td>
 <td style="text-align: right;">NA</td>
@@ -2512,7 +2553,7 @@ Advertencia
 <tr class="even">
 <td style="text-align: left;">larebaja_2026-10-10</td>
 <td style="text-align: left;">La Rebaja</td>
-<td style="text-align: left;">2026-10-10T09:52:56-05:00</td>
+<td style="text-align: left;">2026-10-10T15:32:32-05:00</td>
 <td style="text-align: right;">168</td>
 <td style="text-align: right;">167</td>
 <td style="text-align: right;">167</td>
@@ -2521,7 +2562,7 @@ Advertencia
 <tr class="odd">
 <td style="text-align: left;">locatel_2026-10-10</td>
 <td style="text-align: left;">Locatel</td>
-<td style="text-align: left;">2026-10-10T09:52:58-05:00</td>
+<td style="text-align: left;">2026-10-10T15:32:33-05:00</td>
 <td style="text-align: right;">375</td>
 <td style="text-align: right;">339</td>
 <td style="text-align: right;">339</td>
@@ -4498,6 +4539,9 @@ Advertencia
 <h1 data-number="9"><span class="header-section-number">9</span> Limitaciones</h1>
 <ul>
 <li><strong>Fecha y condiciones de captura.</strong> Los precios son los observados en el momento de la consulta. Los tres comercios usan campañas y descuentos temporales: por ejemplo, un mismo producto apareció con precio tachado y descuento de 10 % en el servicio de La Rebaja. Además, los sitios advierten que los precios pueden variar según la ciudad de entrega, y la consulta no fijó una ciudad.</li>
+</ul>
+<p>Además, las ejecuciones coincidieron con campañas comerciales publicadas por los propios comercios: Locatel anuncia en su página de políticas comerciales «Descuentos 1Q» (1 al 15 de octubre de 2026), «Cuidado Personal» (8 al 10) y «Segunda unidad con el 50 %» (9 y 10), y aclara que sus descuentos se aplican sobre el precio máximo de venta al público. Las diferencias de precio entre las ejecuciones del 07 y el 09 de octubre pueden deberse a esas campañas y no a cambios del precio regular.</p>
+<ul>
 <li><strong>Correspondencia de productos.</strong> Con EAN se verificó el mismo producto entre La Rebaja y Locatel, pero Farmatodo no publica EAN en el listado, y la equivalencia con ese comercio se basa en marca, producto y contenido.</li>
 <li><strong>Contenido.</strong> El campo de medida del sitio no siempre es el contenido real (en Locatel, una venda de “1x5 yardas” figuraba con 17 g), así que el contenido de los comparables se verificó a mano contra el nombre.</li>
 <li><strong>Cobertura.</strong> Locatel no tiene una subcategoría de antisépticos dentro de su sección de heridas, por lo que su oferta de esa familia queda subrepresentada. Las exclusiones (por ejemplo ostomías, guantes y jeringas) siguen reglas explícitas, que pueden discutirse.</li>
