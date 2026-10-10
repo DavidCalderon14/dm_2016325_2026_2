@@ -1,5 +1,437 @@
 ---
-title: "script"
-format: html
+title: "Taller 1 — Comparador de precios en comercios en línea"
+subtitle: "Categoría: Primeros auxilios y curación"
+author: "Johan Steven Avilán Peñaloza"
+date: today
+date-format: "DD-MM-YYYY"
+lang: es
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    embed-resources: true
+    code-fold: show
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
 ---
 
+# Introducción y alcance
+
+Este informe compara los precios de productos de la categoría **Primeros auxilios y curación** (gasas, vendas, apósitos, curitas, esparadrapos, antisépticos para heridas y kits de curación) en tres comercios en línea de Colombia. Los datos provienen del código de extracción (`scraper.R`), se almacenan en una base SQLite (`comparador_precios.sqlite`) y se analizan con consultas SQL.
+
+Todo el proceso (extracción, limpieza, carga en SQLite, consultas y gráficos) se realizó en **R**.
+
+::: {.callout-note}
+Los precios corresponden al momento y a las condiciones de la captura. No deben leerse como precios permanentes: los comercios cambian precios y promociones con frecuencia.
+:::
+
+# Fuentes y estrategia de extracción
+
+## Comercios consultados
+
+| Comercio | Sección consultada | Técnica de extracción |
+|---|---|---|
+| **Farmatodo** | `farmatodo.com.co/categorias/salud-y-medicamentos/botiquin-y-primeros-auxilios`, subcategorías *curitas, algodones, adhesivos y botiquín*, *antisépticos*, *vendas* y *compresas* | Página dinámica leída con Chrome automatizado (`rvest::read_html_live()`), pulsando "Cargar más" hasta agotar el listado |
+| **La Rebaja** | `larebajavirtual.com/drogueria/cuidado-de-la-herida` | Servicio JSON interno de la tienda (`/api/catalog_system/pub/products/search`), páginas de 50 productos |
+| **Locatel** | `locatelcolombia.com/drogueria/cuidado-heridas` | Mismo servicio JSON de La Rebaja (ambas son tiendas VTEX) |
+
+La Rebaja y Locatel declaran el total de productos de la sección en la cabecera de la respuesta, y eso permite comprobar que la extracción está completa. En Farmatodo no existe ese total, y la completitud se verifica porque el botón "Cargar más" desaparece y el conteo deja de crecer.
+
+## Buenas prácticas aplicadas
+
+- Pausa de 1 segundo entre peticiones (`Sys.sleep()`), reintentos ante fallos y un *user agent* que identifica el uso académico.
+- Conservación del **texto original** de cada anuncio (nombre, marca, presentación y precio tal como se muestran); la limpieza se hace en columnas aparte.
+- **Copia cruda** de cada respuesta (HTML o JSON) en `raw/<comercio>/<fecha>/`, y modo sin conexión que reprocesa esas copias.
+- Fecha y hora de consulta (ISO 8601, hora de Colombia) en todas las observaciones.
+- Una tabla de ejecuciones que registra cada corrida con su estado (completa, parcial o fallida).
+
+::: {.callout-warning}
+**Pendiente de completar por el autor:** resultado de revisar el archivo `robots.txt` y los términos de uso de cada sitio (`/robots.txt` de los tres dominios), y la ciudad con la que se visualizaron los precios al compararlos con el navegador.
+:::
+
+# Recolección y carga
+
+El parámetro `MODO` controla el comportamiento: `"online"` consulta los sitios y guarda las copias crudas; `"offline"` reprocesa lo que haya en `raw/` sin consultar ningún sitio. Se puede cambiar con la variable de entorno `MODO`.
+
+```{r setup}
+source("scraper.R")
+pacman::p_load(ggplot2, knitr, scales)
+
+dir_proyecto <- "."
+ruta_db      <- file.path(dir_proyecto, "comparador_precios.sqlite")
+MODO         <- Sys.getenv("MODO", unset = "offline")   # "online" | "offline"
+
+mostrar <- function(df) {
+  knitr::kable(df, format.args = list(big.mark = ".", decimal.mark = ","))
+}
+```
+
+```{r recoleccion}
+#| output: false
+if (MODO == "online") {
+  invisible(ejecutar_recoleccion_completa(dir_proyecto, ruta_db, modo = "online"))
+} else {
+  # Reprocesa todas las fechas que haya en raw/ (la unicidad evita duplicados)
+  dirs   <- list.dirs(file.path(dir_proyecto, "raw"), recursive = TRUE)
+  fechas <- sort(unique(grep("^\\d{4}-\\d{2}-\\d{2}$", basename(dirs), value = TRUE)))
+  for (f in fechas) {
+    invisible(ejecutar_recoleccion_completa(dir_proyecto, ruta_db, modo = "offline", fecha = f))
+  }
+}
+```
+
+```{r conexion}
+con <- DBI::dbConnect(RSQLite::SQLite(), ruta_db)
+DBI::dbExecute(con, "PRAGMA foreign_keys = ON")
+q <- function(sql) DBI::dbGetQuery(con, sql)
+```
+
+# Base de datos SQLite
+
+La base tiene cinco tablas:
+
+- `comercios`: los comercios consultados.
+- `anuncios`: cada producto tal como aparece en un comercio, con su texto original. Es única por comercio y SKU.
+- `observaciones`: el precio de un anuncio en un momento dado. Es única por anuncio y fecha-hora de consulta, de modo que una misma observación no se inserta dos veces y las ejecuciones nuevas no sobrescriben las anteriores.
+- `ejecuciones`: una fila por corrida y comercio, con fecha y hora de inicio, registros obtenidos, total declarado por el sitio y estado.
+- `productos_comparables`: los ocho productos (o presentaciones) que se comparan, con la regla de correspondencia.
+
+```{r ejecuciones}
+q("SELECT e.id_ejecucion, c.nombre AS comercio, e.fecha_hora_inicio,
+          e.registros, e.total_sitio, e.estado
+   FROM ejecuciones e
+   JOIN comercios c ON c.id_comercio = e.id_comercio
+   ORDER BY e.fecha_hora_inicio, c.nombre") |> mostrar()
+```
+
+# Limpieza y correspondencia de productos
+
+## Delimitación de la categoría
+
+Las secciones consultadas incluyen productos que no pertenecen a la categoría asignada. Se excluyen con reglas explícitas, y cada exclusión queda registrada con su motivo en la columna `motivo_exclusion`.
+
+```{r reglas}
+reglas_exclusion |> mostrar()
+```
+
+```{r exclusiones}
+aplicar_exclusiones(con)
+q("SELECT c.nombre AS comercio,
+          CASE a.incluido WHEN 1 THEN 'Incluido' ELSE 'Excluido' END AS estado,
+          COALESCE(a.motivo_exclusion, '(dentro de la categoría)') AS motivo,
+          COUNT(*) AS anuncios
+   FROM anuncios a
+   JOIN comercios c ON c.id_comercio = a.id_comercio
+   GROUP BY c.nombre, a.incluido, a.motivo_exclusion
+   ORDER BY c.nombre, a.incluido DESC") |> mostrar()
+```
+
+## Correspondencia de los ocho productos comparables
+
+La correspondencia se define **por reglas en el código** (`especificacion_comparables`, en `scraper.R`), y el resultado queda registrado en la base y en `comparables.csv` (generado automáticamente, para auditoría):
+
+- **La Rebaja y Locatel:** por **código de barras (EAN)**. Un mismo EAN identifica el mismo producto sin ambigüedad.
+- **Farmatodo**, que no publica EAN en el listado: por una expresión regular sobre el nombre original que combina marca, producto y medida, y que debe identificar **exactamente un anuncio**. Si una regla no encuentra uno solo, el proceso se detiene en lugar de elegir al azar.
+
+Dos presentaciones solo se consideran equivalentes si coinciden en marca, producto y contenido (mismo volumen, peso, número de unidades o medida).
+
+```{r reglas_comparables}
+especificacion_comparables |>
+  transmute(id = id_comparable, producto = nombre_comun, EAN = ean,
+            `patrón en Farmatodo` = patron_farmatodo) |>
+  mostrar()
+```
+
+```{r comparables}
+resolver_comparables(con, ruta_csv = file.path(dir_proyecto, "comparables.csv"))
+
+q("SELECT p.id_comparable AS id, p.nombre_comun AS producto, c.nombre AS comercio,
+          a.sku, a.nombre_original AS anuncio_original,
+          a.contenido_valor || ' ' || a.contenido_unidad AS contenido
+   FROM productos_comparables p
+   JOIN anuncios a  ON a.id_comparable = p.id_comparable
+   JOIN comercios c ON c.id_comercio = a.id_comercio
+   ORDER BY p.id_comparable, c.nombre") |> mostrar()
+```
+
+```{r vista}
+# Vista con la última observación de cada anuncio comparable por fecha
+DBI::dbExecute(con, "DROP VIEW IF EXISTS v_comparables")
+DBI::dbExecute(con, "
+  CREATE VIEW v_comparables AS
+  SELECT substr(o.fecha_hora_consulta, 1, 10) AS fecha,
+         o.fecha_hora_consulta, p.id_comparable, p.nombre_comun AS producto,
+         c.nombre AS comercio, a.sku, a.nombre_original,
+         o.precio, o.precio_antes, o.es_promocion,
+         a.contenido_valor, a.contenido_unidad
+  FROM observaciones o
+  JOIN anuncios a  ON a.id_anuncio = o.id_anuncio
+  JOIN comercios c ON c.id_comercio = a.id_comercio
+  JOIN productos_comparables p ON p.id_comparable = a.id_comparable
+  WHERE o.precio IS NOT NULL
+    AND o.id_observacion IN (
+      SELECT MAX(id_observacion) FROM observaciones
+      GROUP BY id_anuncio, substr(fecha_hora_consulta, 1, 10))")
+```
+
+# Consultas SQL
+
+En las consultas 3 a 6 se usa la **fecha de referencia**: la ejecución más reciente que contiene los ocho productos en los tres comercios.
+
+## Pregunta 1. ¿Cuántos comercios, productos y observaciones contiene la base?
+
+```{r q1}
+q("SELECT (SELECT COUNT(*) FROM comercios)             AS comercios,
+          (SELECT COUNT(*) FROM anuncios)              AS productos_anuncios,
+          (SELECT COUNT(*) FROM productos_comparables) AS productos_comparables,
+          (SELECT COUNT(*) FROM observaciones)         AS observaciones") |> mostrar()
+
+q1b <- q("SELECT c.nombre AS comercio,
+                 COUNT(DISTINCT a.id_anuncio) AS productos,
+                 COUNT(o.id_observacion)      AS observaciones
+          FROM anuncios a
+          JOIN comercios c ON c.id_comercio = a.id_comercio
+          LEFT JOIN observaciones o ON o.id_anuncio = a.id_anuncio
+          GROUP BY c.nombre")
+mostrar(q1b)
+```
+
+**Interpretación.** La base reúne `r nrow(q1b)` comercios y `r format(sum(q1b$productos), big.mark = ".")` anuncios de productos. El comercio con más oferta en la categoría es **`r q1b$comercio[which.max(q1b$productos)]`** (`r max(q1b$productos)` productos). Esa cifra incluye los productos que luego se excluyen de la categoría (pregunta 8).
+
+## Pregunta 2. ¿Hay al menos 24 observaciones comparables en una misma ejecución? ¿Hay repetidos?
+
+```{r q2}
+cob <- q("SELECT fecha,
+                 COUNT(*)                     AS observaciones_comparables,
+                 COUNT(DISTINCT id_comparable) AS productos,
+                 COUNT(DISTINCT comercio)      AS comercios
+          FROM v_comparables
+          GROUP BY fecha
+          ORDER BY fecha")
+mostrar(cob)
+
+repetidos <- q("SELECT fecha, comercio, id_comparable, COUNT(*) AS veces
+                FROM v_comparables
+                GROUP BY fecha, comercio, id_comparable
+                HAVING COUNT(*) > 1")
+if (nrow(repetidos) == 0) cat("Sin registros repetidos del mismo producto y comercio en una misma fecha.\n") else mostrar(repetidos)
+
+fecha_ref <- max(cob$fecha[cob$observaciones_comparables >= 24 & cob$comercios == 3])
+```
+
+**Interpretación.** La fecha de referencia es **`r fecha_ref`**: en ella hay `r cob$observaciones_comparables[cob$fecha == fecha_ref]` observaciones comparables (mínimo exigido: 24 = 8 productos × 3 comercios). `r if (nrow(repetidos) == 0) "No hay registros repetidos del mismo producto y comercio en una misma ejecución." else paste("Se encontraron", nrow(repetidos), "casos repetidos.")`
+
+## Pregunta 3. Precio mínimo, máximo y promedio por presentación comparable
+
+```{r q3}
+q3 <- q(sprintf("
+  WITH base AS (SELECT * FROM v_comparables WHERE fecha = '%s'),
+  est AS (SELECT id_comparable,
+                 MIN(precio) AS minimo, MAX(precio) AS maximo, ROUND(AVG(precio)) AS promedio
+          FROM base GROUP BY id_comparable)
+  SELECT e.id_comparable AS id, b.producto, e.minimo, e.maximo, e.promedio,
+         GROUP_CONCAT(b.comercio, ' / ') AS comercio_mas_barato
+  FROM est e
+  JOIN base b ON b.id_comparable = e.id_comparable AND b.precio = e.minimo
+  GROUP BY e.id_comparable
+  ORDER BY e.id_comparable", fecha_ref))
+mostrar(q3)
+```
+
+```{r q3_texto}
+#| include: false
+ganadores <- table(unlist(strsplit(q3$comercio_mas_barato, " / ")))
+empates   <- sum(grepl("/", q3$comercio_mas_barato))
+```
+
+**Interpretación.** **`r names(which.max(ganadores))`** ofreció el menor precio en `r max(ganadores)` de las `r nrow(q3)` presentaciones (los empates cuentan para cada comercio empatado; hubo `r empates` empate(s)). La columna `comercio_mas_barato` lista todos los comercios que comparten el precio mínimo.
+
+## Pregunta 4. Ahorro al elegir la oferta más económica
+
+El ahorro se mide frente a la **oferta más cara** de cada presentación.
+
+```{r q4}
+q4 <- q(sprintf("
+  SELECT id_comparable AS id, producto, minimo, maximo,
+         maximo - minimo AS ahorro_cop,
+         ROUND(100.0 * (maximo - minimo) / maximo, 1) AS ahorro_pct
+  FROM (SELECT id_comparable, producto, MIN(precio) AS minimo, MAX(precio) AS maximo
+        FROM v_comparables WHERE fecha = '%s'
+        GROUP BY id_comparable, producto)
+  ORDER BY id_comparable", fecha_ref))
+mostrar(q4)
+```
+
+**Interpretación.** El ahorro promedio de elegir la opción más barata es de **COP `r format(round(mean(q4$ahorro_cop)), big.mark = ".")`** (`r round(mean(q4$ahorro_pct), 1)` %), con un máximo de `r max(q4$ahorro_pct)` % en *`r q4$producto[which.max(q4$ahorro_pct)]`*.
+
+## Pregunta 5. Menor precio por unidad (mL, g o unidad)
+
+```{r q5}
+q5 <- q(sprintf("
+  SELECT producto, comercio, precio, contenido_valor AS contenido, contenido_unidad AS unidad,
+         ROUND(precio * 1.0 / contenido_valor, 2) AS precio_por_unidad,
+         RANK() OVER (PARTITION BY id_comparable
+                      ORDER BY precio * 1.0 / contenido_valor) AS puesto
+  FROM v_comparables
+  WHERE fecha = '%s' AND contenido_valor > 0
+  ORDER BY producto, puesto", fecha_ref))
+mostrar(q5[q5$puesto == 1, ])
+```
+
+**Interpretación.** La tabla muestra, para cada producto, la opción con el menor precio por unidad de contenido. Como los ocho productos se definieron con el **mismo contenido** en los tres comercios, el menor precio por unidad coincide con el menor precio absoluto de la pregunta 3. El cálculo queda disponible para presentaciones de distinto tamaño.
+
+## Pregunta 6. Mayores diferencias de precio entre comercios
+
+```{r q6}
+q6 <- q(sprintf("
+  WITH base AS (SELECT * FROM v_comparables WHERE fecha = '%s'),
+  est AS (SELECT id_comparable, producto, MIN(precio) AS minimo, MAX(precio) AS maximo
+          FROM base GROUP BY id_comparable, producto)
+  SELECT producto, minimo, maximo,
+         maximo - minimo AS diferencia_cop,
+         ROUND(100.0 * (maximo - minimo) / maximo, 1) AS ahorro_pct,
+         (SELECT GROUP_CONCAT(comercio, ' / ') FROM base b
+          WHERE b.id_comparable = est.id_comparable AND b.precio = est.minimo) AS mas_barato,
+         (SELECT GROUP_CONCAT(comercio, ' / ') FROM base b
+          WHERE b.id_comparable = est.id_comparable AND b.precio = est.maximo) AS mas_caro
+  FROM est
+  ORDER BY ahorro_pct DESC", fecha_ref))
+mostrar(q6)
+```
+
+**Interpretación.** La mayor brecha porcentual está en *`r q6$producto[1]`*: `r q6$ahorro_pct[1]` % entre el comercio más barato (`r q6$mas_barato[1]`) y el más caro (`r q6$mas_caro[1]`). La menor está en *`r q6$producto[nrow(q6)]`* (`r q6$ahorro_pct[nrow(q6)]` %).
+
+## Pregunta 7. Datos faltantes o inconsistentes
+
+```{r q7}
+q7 <- q("
+  SELECT c.nombre AS comercio,
+         COUNT(*) AS observaciones,
+         SUM(o.precio IS NULL)                                        AS sin_precio,
+         SUM(a.marca_original IS NULL OR TRIM(a.marca_original) = '') AS sin_marca,
+         SUM(a.descripcion_original IS NULL OR TRIM(a.descripcion_original) = '') AS sin_descripcion,
+         SUM(a.ean IS NULL OR a.ean = '')                             AS sin_ean,
+         SUM(a.contenido_origen IS NULL)                              AS sin_contenido_en_campo,
+         SUM(o.precio_antes IS NOT NULL AND o.precio_antes <= o.precio) AS precio_antes_inconsistente
+  FROM observaciones o
+  JOIN anuncios a  ON a.id_anuncio = o.id_anuncio
+  JOIN comercios c ON c.id_comercio = a.id_comercio
+  WHERE a.incluido = 1
+  GROUP BY c.nombre")
+mostrar(q7)
+```
+
+**Interpretación.** Los productos agotados quedan con precio `NULL` (nunca 0) y se excluyen de los cálculos de precios: son `r sum(q7$sin_precio)` observaciones. Farmatodo no publica código de barras ni descripción en el listado, y por eso la comparación con ese comercio depende de la marca, el nombre y el contenido. En Locatel el contenido de algunos productos solo está en el nombre (por ejemplo, "x 12 und"), y el campo de unidad de medida del sitio no siempre es el contenido real.
+
+## Pregunta 8. Tamaño de la oferta y calidad de los datos por comercio
+
+```{r q8}
+q8a <- q("
+  SELECT substr(o.fecha_hora_consulta, 1, 10) AS fecha, c.nombre AS comercio,
+         COUNT(DISTINCT a.id_anuncio) AS productos_en_la_categoria
+  FROM observaciones o
+  JOIN anuncios a  ON a.id_anuncio = o.id_anuncio
+  JOIN comercios c ON c.id_comercio = a.id_comercio
+  WHERE a.incluido = 1
+  GROUP BY fecha, c.nombre
+  ORDER BY fecha, c.nombre")
+mostrar(q8a)
+
+anuncios <- q("SELECT c.nombre AS comercio, a.*
+               FROM anuncios a JOIN comercios c ON c.id_comercio = a.id_comercio
+               WHERE a.incluido = 1")
+patron_contenido <- "\\d+([.,]\\d+)?\\s*(ml|l|lt|g|gr|kg|mg|und|unid|unidades|cm|m|mts|yd|yds|yardas|pulg)\\b"
+
+q8b <- anuncios |>
+  group_by(comercio) |>
+  summarise(
+    anuncios        = n(),
+    con_descripcion = mean(!is.na(descripcion_original) & nzchar(trimws(descripcion_original))),
+    con_marca       = mean(!is.na(marca_original) & nzchar(trimws(marca_original))),
+    con_contenido   = mean(!is.na(contenido_origen) |
+                           str_detect(nombre_original, regex(patron_contenido, ignore_case = TRUE)))
+  ) |>
+  mutate(across(starts_with("con_"), ~ scales::percent(.x, accuracy = 1)))
+mostrar(q8b)
+```
+
+**Interpretación.** El tamaño de la oferta difiere entre comercios: `r paste0(q8b$comercio, " (", q8b$anuncios, ")", collapse = ", ")` anuncios dentro de la categoría. La proporción de productos con marca es alta en todos, mientras que descripción y contenido identificable varían: el contenido casi siempre puede inferirse del nombre, pero la descripción no está disponible en todos los sitios.
+
+# Gráficos
+
+```{r g1}
+#| fig-cap: "Precio de cada presentación comparable por comercio (fecha de referencia)."
+#| fig-height: 5
+datos_ref <- q(sprintf("SELECT * FROM v_comparables WHERE fecha = '%s'", fecha_ref))
+ggplot(datos_ref, aes(x = precio, y = reorder(producto, precio, FUN = min), color = comercio)) +
+  geom_point(size = 3.5) +
+  scale_x_continuous(labels = label_number(big.mark = ".", decimal.mark = ",")) +
+  labs(x = "Precio (COP)", y = NULL, color = "Comercio",
+       title = "¿Dónde es más barato cada producto?") +
+  theme_minimal(base_size = 12)
+```
+
+```{r g2}
+#| fig-cap: "Ahorro porcentual al elegir la oferta más barata frente a la más cara."
+#| fig-height: 4.5
+ggplot(q4, aes(x = ahorro_pct, y = reorder(producto, ahorro_pct))) +
+  geom_col(fill = "#2c7fb8") +
+  geom_text(aes(label = paste0(ahorro_pct, " %")), hjust = -0.1, size = 3.5) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(x = "Ahorro (%)", y = NULL, title = "Diferencia entre el comercio más caro y el más barato") +
+  theme_minimal(base_size = 12)
+```
+
+```{r g3}
+#| fig-cap: "Distribución de precios de toda la categoría por comercio (escala logarítmica)."
+#| fig-height: 4.5
+todos <- q(sprintf("
+  SELECT c.nombre AS comercio, o.precio
+  FROM observaciones o
+  JOIN anuncios a  ON a.id_anuncio = o.id_anuncio
+  JOIN comercios c ON c.id_comercio = a.id_comercio
+  WHERE a.incluido = 1 AND o.precio IS NOT NULL
+    AND substr(o.fecha_hora_consulta, 1, 10) = '%s'", fecha_ref))
+ggplot(todos, aes(x = comercio, y = precio, fill = comercio)) +
+  geom_boxplot(show.legend = FALSE, outlier.alpha = 0.4) +
+  scale_y_log10(labels = label_number(big.mark = ".", decimal.mark = ",")) +
+  labs(x = NULL, y = "Precio (COP, escala log)", title = "Precios de la categoría por comercio") +
+  theme_minimal(base_size = 12)
+```
+
+```{r g4}
+#| fig-cap: "Cambio de precio de los productos comparables entre ejecuciones."
+#| fig-height: 6
+hist <- q("SELECT * FROM v_comparables ORDER BY fecha")
+if (n_distinct(hist$fecha) >= 2) {
+  p <- ggplot(hist, aes(x = fecha, y = precio, group = comercio, color = comercio)) +
+    geom_line() + geom_point() +
+    facet_wrap(~ producto, scales = "free_y") +
+    labs(x = "Fecha de consulta", y = "Precio (COP)", color = "Comercio") +
+    theme_minimal(base_size = 11) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  print(p)
+} else {
+  cat("Solo hay una fecha de consulta con los productos comparables; este gráfico requiere al menos dos ejecuciones.\n")
+}
+```
+
+# Conclusión para el consumidor
+
+En la fecha de referencia (**`r fecha_ref`**), **`r names(which.max(ganadores))`** fue el comercio con más precios mínimos (`r max(ganadores)` de `r nrow(q3)` presentaciones comparables). Elegir la oferta más barata de cada producto ahorra en promedio **`r round(mean(q4$ahorro_pct), 1)` %** frente a la más cara, con diferencias de hasta **`r max(q4$ahorro_pct)` %** (*`r q4$producto[which.max(q4$ahorro_pct)]`*). La recomendación práctica es comparar antes de comprar, porque ningún comercio es el más barato en todos los productos, salvo que la tabla de la pregunta 3 muestre lo contrario.
+
+# Limitaciones
+
+- **Fecha y condiciones de captura.** Los precios son los observados en el momento de la consulta. Los tres comercios usan campañas y descuentos temporales: por ejemplo, un mismo producto apareció con precio tachado y descuento de 10 % en el servicio de La Rebaja. Además, los sitios advierten que los precios pueden variar según la ciudad de entrega, y la consulta no fijó una ciudad.
+- **Correspondencia de productos.** Con EAN se verificó el mismo producto entre La Rebaja y Locatel, pero Farmatodo no publica EAN en el listado, y la equivalencia con ese comercio se basa en marca, producto y contenido.
+- **Contenido.** El campo de medida del sitio no siempre es el contenido real (en Locatel, una venda de "1x5 yardas" figuraba con 17 g), así que el contenido de los comparables se verificó a mano contra el nombre.
+- **Cobertura.** Locatel no tiene una subcategoría de antisépticos dentro de su sección de heridas, por lo que su oferta de esa familia queda subrepresentada. Las exclusiones (por ejemplo ostomías, guantes y jeringas) siguen reglas explícitas, que pueden discutirse.
+- **Ejecuciones.** Con una sola fecha no se pueden medir cambios de precio; con dos o más, el gráfico de evolución los muestra.
+
+```{r cierre}
+#| include: false
+DBI::dbDisconnect(con)
+```
