@@ -27,7 +27,7 @@ parcial_01/
 │   ├── farmatodo/AAAA-MM-DD/*.html.gz
 │   ├── la_rebaja/AAAA-MM-DD/pag_*.json
 │   └── locatel/AAAA-MM-DD/pag_*.json
-├── exploracion.R                 # script de trabajo usado durante el desarrollo (opcional)
+├── exploracion.R                 # script de trabajo usado durante el desarrollo
 ├── renv.lock                     # dependencias con versiones fijas
 └── README.md
 ```
@@ -70,13 +70,24 @@ quarto render taller_1.qmd
 
 (`MODO` es `offline` por defecto.) Si se borra `comparador_precios.sqlite`, el informe la reconstruye a partir de `raw/` y de `comparables.csv`.
 
+## Organización del módulo `scraper.R`
+
+- Una función por comercio, que devuelve **siempre las mismas columnas** (`columnas_estandar`): `scrape_farmatodo()`, `scrape_la_rebaja()` y `scrape_locatel()`. Cada una admite `modo = "online"` o `"offline"`.
+- Una función general, `ejecutar_recoleccion_completa()`, que recolecta los tres comercios, registra cada ejecución, inserta en SQLite sin sobrescribir observaciones anteriores y aplica la delimitación de la categoría y la estandarización.
+- Copias crudas comprimidas (`.html.gz` en Farmatodo y `.json.gz` en La Rebaja y Locatel), junto con la fecha-hora de captura y, en las tiendas VTEX, el total declarado por el sitio.
+
 ## Decisiones de diseño
 
+- **Estandarización en campos propios:** marca, nombre y subcategoría estandarizados (`anuncios.marca`, `nombre_estandar`, `subcategoria`) y contenido/unidad de los comparables; el texto original no se modifica.
 - **Texto original conservado.** Nombre, marca, presentación y precio se guardan tal como aparecen en el sitio, y la limpieza va en columnas aparte.
 - **Productos agotados:** se guardan con `precio = NULL`, nunca con 0, y se excluyen de los cálculos de precios.
 - **Delimitación de la categoría:** reglas explícitas de exclusión (ostomías, guantes, tapabocas, jeringas, instrumentos, removedores de adhesivo, copitos y antisépticos de manos). Quedan en `anuncios.motivo_exclusion`.
 - **Correspondencia de productos:** por reglas en código (`especificacion_comparables` en `scraper.R`), registrada en la tabla `productos_comparables` y en `comparables.csv`. En La Rebaja y Locatel se usa el código de barras (EAN); en Farmatodo, una expresión regular sobre el nombre (marca, producto y medida) que debe identificar un solo anuncio.
 - **Unicidad:** un anuncio es único por comercio y SKU; una observación, por anuncio y fecha-hora de consulta.
+
+## Consultas SQL
+
+Las consultas del informe siguen la notación del taller de SQL de la clase: `INNER JOIN` y `LEFT JOIN`, subconsultas, CTEs encadenadas (`WITH`) y funciones de ventana (`RANK() OVER`, `LAG`). Se ejecutan con `dbGetQuery()` y se muestran con `mostrar_tabla()`.
 
 ## Limitaciones
 
@@ -86,4 +97,4 @@ quarto render taller_1.qmd
 
 ## Cumplimiento ético
 
-Pausa de 1 segundo entre peticiones, reintentos limitados, *user agent* que identifica el uso académico y consulta únicamente de información pública. Revisión de `robots.txt` y términos de uso de los tres sitios: **[COMPLETAR]**.
+Pausa de 1 segundo entre peticiones, reintentos limitados, *user agent* que identifica el uso académico y consulta únicamente de información pública. Revisión de `robots.txt` y términos de uso de los tres sitios: **[COMPLETAR]**. Prueba desde otro entorno (Colab/GitHub Actions): **[COMPLETAR]**.

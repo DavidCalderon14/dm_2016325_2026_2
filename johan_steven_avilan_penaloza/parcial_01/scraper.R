@@ -1,20 +1,3 @@
-# =====================================================================
-# scraper.R  -  Módulo de extracción (Taller 1, Minería de Datos)
-# Categoría: Primeros auxilios y curación
-# Comercio implementado: Farmatodo   |   Pendientes: comercios 2 y 3
-#
-# Este archivo SOLO define funciones y constantes: al hacer source() no
-# descarga nada. Lo usan exploracion.R y, al final, el taller_1.qmd.
-#
-# Recolección con UNA llamada:
-#   recolectar_farmatodo(id_ejecucion, dir_raw, modo = "online")
-#       -> consulta el sitio con Chrome y guarda las copias crudas en dir_raw
-#   recolectar_farmatodo(id_ejecucion, dir_raw, modo = "offline")
-#       -> reprocesa las copias de dir_raw SIN consultar el sitio
-#
-# Requiere Google Chrome instalado (read_html_live() usa chromote).
-# =====================================================================
-
 if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
 pacman::p_load(rvest, httr2, jsonlite, DBI, RSQLite, dplyr, stringr, purrr, tibble)
 
@@ -36,7 +19,6 @@ slugs_farmatodo <- c(
 
 # ---- Utilidades -------------------------------------------------------
 
-# Fecha y hora ISO 8601 con hora de Colombia (ej. 2026-10-04T17:30:49-05:00)
 ahora_iso <- function() {
   x <- format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z", tz = "America/Bogota")
   sub("(\\d{2})$", ":\\1", x)
@@ -50,15 +32,13 @@ parsear_farmatodo <- function(pagina, subcategoria, id_ejecucion, ts) {
 
   map_dfr(tarjetas, function(t) {
     enlace <- html_element(t, "a.product-card-handler__detail-description")
-    # Enlace: primero el del nombre; si falta, el de la imagen
     href_det <- html_attr(enlace, "href")
     href_img <- html_attr(html_element(t, "a.product-card-handler__image-link"), "href")
     href     <- dplyr::coalesce(href_det, href_img)
-    # SKU: del enlace; si falta, del atributo data-test de la tarjeta
     sku_card <- str_match(html_attr(t, "data-test"), "product-card-(\\d+)")[, 2]
     sku      <- dplyr::coalesce(str_match(href, "/producto/(\\d+)")[, 2], sku_card)
 
-    if (is.na(href)) {   # diagnóstico: mostrar cómo es esta tarjeta
+    if (is.na(href)) {   
       cat("\n!! Tarjeta SIN enlace (", subcategoria, ") SKU por data-test:", sku_card, "\n",
           substr(as.character(t), 1, 1500), "\n")
     }
@@ -73,7 +53,7 @@ parsear_farmatodo <- function(pagina, subcategoria, id_ejecucion, ts) {
       nombre_original        = trimws(html_text(enlace)),
       marca_original         = trimws(html_text(html_element(t, ".product-card-handler__brand-value"))),
       subcategoria_origen    = subcategoria,
-      # Sin precio publicado (producto agotado) => NA, nunca 0
+      # Sin precio publicado (producto agotado) => NA
       precio                 = if (length(montos) == 0) NA_real_ else min(montos),
       precio_antes           = if (length(montos) >= 2) max(montos) else NA_real_,
       es_promocion           = as.integer(length(montos) >= 2),  # SUPOSICIÓN: verificar con una oferta real
@@ -88,9 +68,6 @@ parsear_farmatodo <- function(pagina, subcategoria, id_ejecucion, ts) {
 }
 
 # ---- Una subcategoría completa, con Chrome (read_html_live) -----------
-# Pulsa "Cargar más" hasta que no aparezcan más productos (confirmando con
-# una espera extra antes de parar), guarda la copia cruda si se da dir_raw
-# y devuelve la tabla.
 
 scrape_subcat_live <- function(slug, id_ejecucion = "prueba", max_clics = 60,
                                dir_raw = NULL) {
@@ -101,7 +78,7 @@ scrape_subcat_live <- function(slug, id_ejecucion = "prueba", max_clics = 60,
   on.exit(s$session$close(), add = TRUE)
   Sys.sleep(5)
 
-  # productos únicos en pantalla (por enlace, para no contar duplicados)
+  # productos únicos en pantalla
   contar <- function() {
     s |> html_elements("a.product-card-handler__detail-description") |>
       html_attr("href") |> unique() |> length()
@@ -138,7 +115,7 @@ scrape_subcat_live <- function(slug, id_ejecucion = "prueba", max_clics = 60,
     n_prev <- n_act
   }
 
-  # Copia cruda (sección 3.3 del enunciado): el HTML tal cual está en Chrome, comprimido
+  # Copia cruda
   if (!is.null(dir_raw)) {
     dir.create(dir_raw, recursive = TRUE, showWarnings = FALSE)
     html_crudo <- s$session$Runtime$evaluate("document.documentElement.outerHTML")$result$value
@@ -155,7 +132,7 @@ scrape_subcat_live <- function(slug, id_ejecucion = "prueba", max_clics = 60,
   df
 }
 
-# ---- MODO SIN CONEXIÓN: reprocesar una copia cruda ---------------------
+# ---- MODO SIN CONEXIÓN (reprocesar una copia cruda) ---------------------
 
 parsear_desde_raw <- function(archivo, slug, id_ejecucion = "offline") {
   html <- paste(readLines(gzfile(archivo), encoding = "UTF-8", warn = FALSE),
@@ -169,7 +146,7 @@ parsear_desde_raw <- function(archivo, slug, id_ejecucion = "offline") {
   df
 }
 
-# ---- Recolección completa de Farmatodo con UNA llamada -----------------
+# ---- Recolección completa de Farmatodo con una llamada -----------------
 
 recolectar_farmatodo <- function(id_ejecucion, dir_raw,
                                  modo = c("online", "offline"),
@@ -195,19 +172,14 @@ recolectar_farmatodo <- function(id_ejecucion, dir_raw,
   bind_rows(res)
 }
 
-# =====================================================================
-# COMERCIOS CON TIENDA VTEX (La Rebaja, Locatel)
-# El servicio interno /api/catalog_system/pub/products/search devuelve el
-# catálogo en JSON. El enunciado (3.1) acepta consultar los servicios
-# internos del sitio. La respuesta es HTTP 206 (contenido parcial) y el
-# total de productos viene en la cabecera "resources" (ej. "0-49/164").
-# =====================================================================
+
+# SCRAPPING DE LA REBAJA Y LOCATEL
 
 vtex_url <- function(dominio, ruta) {
   paste0("https://", dominio, "/api/catalog_system/pub/products/search/", ruta)
 }
 
-# Descarga un rango de productos (VTEX permite como máximo 50 por llamada)
+# Descarga un rango de productos
 descargar_vtex_pagina <- function(dominio, ruta, desde, hasta) {
   resp <- request(vtex_url(dominio, ruta)) |>
     req_url_query(`_from` = desde, `_to` = hasta) |>
@@ -219,7 +191,7 @@ descargar_vtex_pagina <- function(dominio, ruta, desde, hasta) {
   list(texto = resp_body_string(resp, encoding = "UTF-8"), total = total)
 }
 
-# De la lista de productos (JSON) a una fila por SKU. Cada campo que no exista
+# De la lista de productos a una fila por SKU. Cada campo que no exista
 # queda en NA en lugar de producir un error.
 parsear_vtex <- function(productos, comercio, dominio, id_ejecucion, ts) {
   map_dfr(productos, function(p) {
@@ -232,13 +204,12 @@ parsear_vtex <- function(productos, comercio, dominio, id_ejecucion, ts) {
       if (length(nm) == 0) return(NA_character_)
       paste(unlist(p[[nm[1]]]), collapse = " | ")
     }
-    presentacion <- campo("^Presentaci[oó]n$")                        # tipo: BOTELLA, FRASCO
-    # Contenido: La Rebaja usa Unidadmedida/Cantidadunidadesmedida; Locatel usa PUM
+    presentacion <- campo("^Presentaci[oó]n$")                    
     contenido_cant   <- dplyr::coalesce(campo("^Cantidadunidadesmedida$"), campo("^PUM - Medida$"))
     contenido_unidad <- dplyr::coalesce(campo("^Unidadmedida$"), campo("^PUM - Unidad de Medida$"))
-    pres_texto       <- campo("^Presentacionunidadmedida$")           # La Rebaja: "BOTELLA X 700 ML"
+    pres_texto       <- campo("^Presentacionunidadmedida$")
     unidades_pack    <- campo("^ML_UnidadesPorPack$")
-    peso_origen      <- campo("^Peso$")                               # Locatel: "75 Gramos"
+    peso_origen      <- campo("^Peso$")                               
 
     map_dfr(p$items, function(it) {
       venta  <- pluck(it, "sellers", 1, .default = list())
@@ -272,7 +243,7 @@ parsear_vtex <- function(productos, comercio, dominio, id_ejecucion, ts) {
         categorias_origen     = if (length(cats) > 0) paste(cats, collapse = " ; ") else NA_character_,
         precio                = precio,
         precio_antes          = antes,
-        es_promocion          = as.integer(!is.na(antes)),   # SUPOSICIÓN: verificar con un producto en oferta
+        es_promocion          = as.integer(!is.na(antes)),  
         disponible            = as.integer(!is.na(stock) && stock > 0),
         vendedor              = as.character(pluck(venta, "sellerName", .default = NA)),
         url                   = as.character(pluck(p, "link", .default = NA)),
@@ -284,7 +255,7 @@ parsear_vtex <- function(productos, comercio, dominio, id_ejecucion, ts) {
 }
 
 # Recolección completa de un comercio VTEX con UNA llamada.
-#   modo "online":  consulta el servicio, guarda cada respuesta en dir_raw (pag_0000.json, ...)
+#   modo "online":  consulta el servicio, guarda cada respuesta en dir_raw
 #   modo "offline": reprocesa lo que haya en dir_raw, sin consultar el sitio
 # El total que declara el sitio queda en attr(resultado, "total_sitio").
 recolectar_vtex <- function(comercio, dominio, ruta, id_ejecucion, dir_raw,
@@ -294,7 +265,7 @@ recolectar_vtex <- function(comercio, dominio, ruta, id_ejecucion, dir_raw,
 
   if (modo == "online") {
     dir.create(dir_raw, recursive = TRUE, showWarnings = FALSE)
-    unlink(list.files(dir_raw, pattern = "^pag_\\d+\\.json$", full.names = TRUE))  # evita mezclar corridas
+    unlink(list.files(dir_raw, pattern = "^pag_\\d+\\.json(\\.gz)?$", full.names = TRUE))  # evita mezclar corridas
     ts <- ahora_iso()
     writeLines(ts, file.path(dir_raw, "ts.txt"))
 
@@ -303,24 +274,29 @@ recolectar_vtex <- function(comercio, dominio, ruta, id_ejecucion, dir_raw,
       hasta <- desde + paso - 1L
       r <- descargar_vtex_pagina(dominio, ruta, desde, hasta)
       total <- r$total
-      writeLines(r$texto, file.path(dir_raw, sprintf("pag_%04d.json", desde)), useBytes = TRUE)
+      con_gz <- gzfile(file.path(dir_raw, sprintf("pag_%04d.json.gz", desde)), "w")   # copia cruda comprimida
+      writeLines(r$texto, con_gz, useBytes = TRUE)
+      close(con_gz)
       cat("  [", comercio, "] ", desde, "-", hasta, " de ", total, "\n", sep = "")
       if (is.na(total) || nchar(r$texto) <= 2 || hasta + 1L >= total) break
       desde <- hasta + 1L
       Sys.sleep(1)
     }
+    writeLines(as.character(total), file.path(dir_raw, "total_sitio.txt"))   # total declarado por el sitio
   } else {
+    tot_file <- file.path(dir_raw, "total_sitio.txt")
+    total <- if (file.exists(tot_file)) suppressWarnings(as.integer(readLines(tot_file, warn = FALSE)[1])) else NA_integer_
     ts_file <- file.path(dir_raw, "ts.txt")
     ts <- if (file.exists(ts_file)) readLines(ts_file, warn = FALSE)[1] else NA_character_
   }
 
-  archivos <- sort(list.files(dir_raw, pattern = "^pag_\\d+\\.json$", full.names = TRUE))
+  archivos <- sort(list.files(dir_raw, pattern = "^pag_\\d+\\.json(\\.gz)?$", full.names = TRUE))
   if (length(archivos) == 0) {
     warning("No hay copias crudas en ", dir_raw)
     return(tibble())
   }
   productos <- unlist(map(archivos, function(f) {
-    txt <- paste(readLines(f, encoding = "UTF-8", warn = FALSE), collapse = "\n")
+    txt <- paste(readLines(gzfile(f), encoding = "UTF-8", warn = FALSE), collapse = "\n") 
     jsonlite::fromJSON(txt, simplifyVector = FALSE)
   }), recursive = FALSE)
 
@@ -329,15 +305,58 @@ recolectar_vtex <- function(comercio, dominio, ruta, id_ejecucion, dir_raw,
   df
 }
 
-# =====================================================================
+# Funciones por comercio
+
+columnas_estandar <- c(
+  "comercio", "id_producto", "sku", "ean",
+  "nombre_original", "variante_original", "descripcion_original",
+  "marca_original", "presentacion_original", "presentacion_texto_origen",
+  "contenido_origen", "contenido_unidad_origen", "unidades_pack_origen", "peso_origen",
+  "subcategoria_origen", "categorias_origen",
+  "precio", "precio_antes", "es_promocion", "disponible", "vendedor",
+  "precio_texto_origen", "url", "fecha_hora_consulta", "id_ejecucion"
+)
+
+estandarizar_columnas <- function(df) {
+  total <- attr(df, "total_sitio")
+  if (nrow(df) > 0) {
+    if (!"id_producto" %in% names(df)) df$id_producto <- df$sku
+    if (!"disponible"  %in% names(df)) df$disponible  <- as.integer(!is.na(df$precio))
+    if (!"precio_texto_origen" %in% names(df)) {
+      df$precio_texto_origen <- if ("precio_bloque_original" %in% names(df)) df$precio_bloque_original else NA_character_
+    }
+  }
+  for (col in setdiff(columnas_estandar, names(df))) df[[col]] <- rep(NA, nrow(df))
+  df <- df[, columnas_estandar]
+  numericas <- c("precio", "precio_antes")
+  enteras   <- c("es_promocion", "disponible")
+  texto     <- setdiff(columnas_estandar, c(numericas, enteras))
+  df[texto]     <- lapply(df[texto], as.character)
+  df[numericas] <- lapply(df[numericas], as.numeric)
+  df[enteras]   <- lapply(df[enteras], as.integer)
+  attr(df, "total_sitio") <- total
+  df
+}
+
+scrape_farmatodo <- function(id_ejecucion, dir_raw, modo = c("online", "offline")) {
+  modo <- match.arg(modo)
+  estandarizar_columnas(recolectar_farmatodo(id_ejecucion, dir_raw, modo))
+}
+
+scrape_la_rebaja <- function(id_ejecucion, dir_raw, modo = c("online", "offline")) {
+  modo <- match.arg(modo)
+  estandarizar_columnas(recolectar_vtex("La Rebaja", "www.larebajavirtual.com",
+                                        "drogueria/cuidado-de-la-herida", id_ejecucion, dir_raw, modo))
+}
+
+scrape_locatel <- function(id_ejecucion, dir_raw, modo = c("online", "offline")) {
+  modo <- match.arg(modo)
+  estandarizar_columnas(recolectar_vtex("Locatel", "www.locatelcolombia.com",
+                                        "drogueria/cuidado-heridas", id_ejecucion, dir_raw, modo))
+}
+
+
 # BASE DE DATOS SQLITE
-# Tablas: comercios, anuncios (cada producto tal como aparece en un comercio,
-# con su texto original), observaciones (un precio en un momento dado),
-# ejecuciones (una fila por corrida y comercio) y productos_comparables.
-# Unicidad: un anuncio es (comercio, sku); una observación es
-# (anuncio, fecha y hora de consulta), así una misma observación no se
-# inserta dos veces y las ejecuciones nuevas NO sobrescriben las anteriores.
-# =====================================================================
 
 crear_base <- function(ruta_db) {
   con <- DBI::dbConnect(RSQLite::SQLite(), ruta_db)
@@ -377,6 +396,9 @@ crear_base <- function(ruta_db) {
        id_comparable             INTEGER REFERENCES productos_comparables(id_comparable),
        incluido                  INTEGER NOT NULL DEFAULT 1,
        motivo_exclusion          TEXT,
+       nombre_estandar           TEXT,
+       marca                     TEXT,
+       subcategoria              TEXT,
        UNIQUE (id_comercio, sku)
      )",
 
@@ -385,6 +407,7 @@ crear_base <- function(ruta_db) {
        id_comercio       INTEGER NOT NULL REFERENCES comercios(id_comercio),
        fecha_hora_inicio TEXT NOT NULL,
        registros         INTEGER,
+       productos         INTEGER,
        total_sitio       INTEGER,
        estado            TEXT NOT NULL CHECK (estado IN ('completa', 'parcial', 'fallida'))
      )",
@@ -418,21 +441,22 @@ estado_ejecucion <- function(df, total_sitio = NA_integer_, n_subcats_esperadas 
 
 # Registra la corrida de un comercio y devuelve el id del comercio
 registrar_ejecucion <- function(con, comercio, id_ejecucion, ts_inicio,
-                                registros, total_sitio, estado) {
+                                registros, total_sitio, estado, productos = NA_integer_) {
   DBI::dbExecute(con, "INSERT OR IGNORE INTO comercios (nombre) VALUES (?)",
                  params = list(comercio))
   id_com <- DBI::dbGetQuery(con, "SELECT id_comercio FROM comercios WHERE nombre = ?",
                             params = list(comercio))$id_comercio
   DBI::dbExecute(con, "
-    INSERT INTO ejecuciones (id_ejecucion, id_comercio, fecha_hora_inicio, registros, total_sitio, estado)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO ejecuciones (id_ejecucion, id_comercio, fecha_hora_inicio, registros, productos, total_sitio, estado)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (id_ejecucion) DO UPDATE SET
       fecha_hora_inicio = excluded.fecha_hora_inicio,
       registros         = excluded.registros,
+      productos         = excluded.productos,
       total_sitio       = excluded.total_sitio,
       estado            = excluded.estado",
     params = list(id_ejecucion, id_com, ts_inicio, as.integer(registros),
-                  as.integer(total_sitio), estado))
+                  as.integer(productos), as.integer(total_sitio), estado))
   id_com
 }
 
@@ -485,19 +509,17 @@ cargar_ejecucion <- function(con, df, comercio, ts_inicio = NULL, estado = NULL,
   if (is.null(ts_inicio)) ts_inicio <- if (nrow(df) > 0) min(df$fecha_hora_consulta, na.rm = TRUE) else ahora_iso()
   if (is.null(estado)) estado <- estado_ejecucion(df, total, n_subcats_esperadas)
 
-  id_com <- registrar_ejecucion(con, comercio, id_ejecucion, ts_inicio, nrow(df), total, estado)
+  productos <- if (nrow(df) > 0 && "id_producto" %in% names(df)) length(unique(df$id_producto)) else nrow(df)
+  id_com <- registrar_ejecucion(con, comercio, id_ejecucion, ts_inicio, nrow(df), total, estado, productos)
   nuevas <- if (nrow(df) > 0) cargar_observaciones(con, df, id_com, id_ejecucion) else 0L
   cat("  [", comercio, "] ", estado, ": ", nrow(df), " filas, ", nuevas, " observaciones nuevas\n", sep = "")
   invisible(nuevas)
 }
 
-# =====================================================================
+
 # FUNCIÓN GENERAL: recolecta los tres comercios, registra cada ejecución
 # e inserta los datos en la base SQLite. UNA sola llamada.
-#   modo "online":  consulta los sitios y guarda raw/AAAA-MM-DD
-#   modo "offline": reprocesa raw/<fecha> sin consultar los sitios
-# Si un comercio falla, se registra como 'fallida' y los demás continúan.
-# =====================================================================
+
 
 ejecutar_recoleccion_completa <- function(dir_proyecto,
                                           ruta_db = file.path(dir_proyecto, "comparador_precios.sqlite"),
@@ -510,15 +532,13 @@ ejecutar_recoleccion_completa <- function(dir_proyecto,
   trabajos <- list(
     list(comercio = "Farmatodo", carpeta = "farmatodo", id = paste0("farmatodo_", fecha),
          n_sub = length(slugs_farmatodo),
-         f = function(id, dir) recolectar_farmatodo(id, dir, modo)),
+         f = function(id, dir) scrape_farmatodo(id, dir, modo)),
     list(comercio = "La Rebaja", carpeta = "la_rebaja", id = paste0("larebaja_", fecha),
          n_sub = NA_integer_,
-         f = function(id, dir) recolectar_vtex("La Rebaja", "www.larebajavirtual.com",
-                                               "drogueria/cuidado-de-la-herida", id, dir, modo)),
+         f = function(id, dir) scrape_la_rebaja(id, dir, modo)),
     list(comercio = "Locatel", carpeta = "locatel", id = paste0("locatel_", fecha),
          n_sub = NA_integer_,
-         f = function(id, dir) recolectar_vtex("Locatel", "www.locatelcolombia.com",
-                                               "drogueria/cuidado-heridas", id, dir, modo))
+         f = function(id, dir) scrape_locatel(id, dir, modo))
   )
 
   resultados <- list()
@@ -538,17 +558,13 @@ ejecutar_recoleccion_completa <- function(dir_proyecto,
                      n_subcats_esperadas = tr$n_sub)
     resultados[[tr$comercio]] <- df
   }
+  aplicar_exclusiones(con)        # delimitación de la categoría
+  estandarizar_anuncios(con)      # marca, nombre y subcategoría estandarizados
   invisible(resultados)
 }
 
-# =====================================================================
 # DELIMITACIÓN DE LA CATEGORÍA Y CORRESPONDENCIA DE PRODUCTOS
-# =====================================================================
 
-# Reglas documentadas de exclusión: productos que aparecen en las secciones
-# consultadas pero NO son de la categoría "Primeros auxilios y curación" (gasas,
-# vendas, apósitos, curitas, esparadrapos, antisépticos para heridas y kits de
-# curación). Se evalúan en orden: gana la primera regla que coincida.
 reglas_exclusion <- tibble::tribble(
   ~motivo,                                                  ~campo,                ~patron,
   "Ostomías (bolsas y accesorios), fuera de la categoría",  "subcategoria_origen", "ostomi",
@@ -582,6 +598,7 @@ aplicar_exclusiones <- function(con) {
 
 # Carga la tabla de correspondencia (comparables.csv, una fila por producto y
 # comercio) en productos_comparables y la enlaza con anuncios.
+
 # Columnas del CSV: id_comparable, nombre_comun, marca_comun, contenido_valor,
 # contenido_unidad, comercio, sku, regla
 cargar_comparables <- function(con, ruta_csv) {
@@ -637,14 +654,13 @@ cargar_comparables_df <- function(con, cmp) {
 }
 
 
-# ---------------------------------------------------------------------
-# CORRESPONDENCIA POR REGLAS (documentada en código y reproducible)
+# CORRESPONDENCIA POR REGLAS 
 # Cada producto comparable se define así:
 #  - La Rebaja y Locatel: por EAN (código de barras). Mismo EAN = mismo producto.
 #  - Farmatodo (no publica EAN en el listado): por una expresión regular sobre
 #    el nombre original, que debe identificar UN solo anuncio (marca, producto
 #    y medida). Si no identifica exactamente uno, el proceso se detiene.
-# ---------------------------------------------------------------------
+
 especificacion_comparables <- tibble::tribble(
   ~id_comparable, ~nombre_comun,                                                  ~marca_comun, ~contenido_valor, ~contenido_unidad, ~ean,            ~patron_farmatodo,
   1, "Alcohol antiséptico MK botella 700 mL",                                     "MK",         700,              "mL",              "7702057075101", "alcohol mk.*700 ?ml",
@@ -658,7 +674,6 @@ especificacion_comparables <- tibble::tribble(
 )
 
 # Aplica las reglas sobre los anuncios de la base y carga la correspondencia.
-# Si se da ruta_csv, guarda además la tabla resultante (para auditoría).
 resolver_comparables <- function(con, especificacion = especificacion_comparables, ruta_csv = NULL) {
   anuncios <- DBI::dbGetQuery(con, "
     SELECT c.nombre AS comercio, a.sku, a.ean, a.nombre_original
@@ -698,4 +713,50 @@ resolver_comparables <- function(con, especificacion = especificacion_comparable
 
   if (!is.null(ruta_csv)) utils::write.csv(cmp, ruta_csv, row.names = FALSE, fileEncoding = "UTF-8")
   invisible(cargar_comparables_df(con, cmp))
+}
+
+
+# ESTANDARIZACIÓN: campos propios; el texto original NO se modifica
+
+normalizar_texto <- function(x) {
+  x |> stringi::stri_trans_general("Latin-ASCII") |> str_to_lower() |>
+    str_replace_all("[^a-z0-9%.,/+ ]", " ") |> str_squish()
+}
+
+# "Alfa Safe" y "ALFASAFE" -> "ALFASAFE"; "Cure Band" y "CUREBAND" -> "CUREBAND"
+estandarizar_marca <- function(x) {
+  m <- x |> stringi::stri_trans_general("Latin-ASCII") |> str_to_upper() |> str_remove_all("[^A-Z0-9]")
+  ifelse(is.na(m) | m == "", NA_character_, m)
+}
+
+# Subcategoría común a los tres comercios, por reglas sobre el nombre normalizado
+# (cada sitio organiza sus secciones de forma distinta). Gana la primera regla.
+reglas_subcategoria <- tibble::tribble(
+  ~subcategoria,                         ~patron,
+  "Gasas y compresas",                   "\\bgasas?\\b|compresas?",
+  "Vendas",                              "\\bvendas?\\b|\\bcoban\\b",
+  "Esparadrapos y cintas",               "esparadrapo|micropor|transpore|\\bcinta|fixomull|fixo ?roll|fixosafe|leukopor|tela adhesiva",
+  "Curitas y apósitos",                  "\\bcuras?\\b|curitas?|venditas?|aposito|tegaderm|parche|hidrocoloide|duoderm|aquacel|cure ?band",
+  "Antisépticos y limpieza de heridas",  "alcohol|isodine|yodopovidona|povidona|agua oxigenada|peroxido|clorhexidina|merthiolate|mertiolate|microdacyn|antisept|desinfect|suero fisiologico",
+  "Algodón",                             "algodon|copito|hisopo",
+  "Botiquines y kits",                   "botiquin|\\bkit\\b",
+  "Cicatrizantes, geles y cremas",       "cicatri|\\bgel\\b|crema|pomada|spray|solucion"
+)
+subcategoria_por_defecto <- "Otros productos de curación"
+
+# Llena anuncios.nombre_estandar, anuncios.marca y anuncios.subcategoria
+estandarizar_anuncios <- function(con) {
+  a <- DBI::dbGetQuery(con, "SELECT id_anuncio, nombre_original, marca_original FROM anuncios")
+  if (nrow(a) == 0) return(invisible(0L))
+  nombre_norm <- normalizar_texto(a$nombre_original)
+  sub <- rep(NA_character_, nrow(a))
+  for (i in seq_len(nrow(reglas_subcategoria))) {
+    hit <- which(is.na(sub) & str_detect(nombre_norm, regex(reglas_subcategoria$patron[i], ignore_case = TRUE)))
+    sub[hit] <- reglas_subcategoria$subcategoria[i]
+  }
+  sub[is.na(sub)] <- subcategoria_por_defecto
+  DBI::dbExecute(con, "UPDATE anuncios SET nombre_estandar = ?, marca = ?, subcategoria = ?
+                       WHERE id_anuncio = ?",
+                 params = list(nombre_norm, estandarizar_marca(a$marca_original), sub, a$id_anuncio))
+  invisible(nrow(a))
 }

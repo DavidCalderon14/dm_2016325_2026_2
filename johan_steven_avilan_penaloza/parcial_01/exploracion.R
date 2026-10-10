@@ -4,8 +4,7 @@
 # =====================================================================
 
 # ---- 0. Configuración --------------------------------------------------
-# Carpeta del proyecto, RELATIVA al directorio de trabajo (getwd()).
-# Sin "/" al inicio: en Windows eso apuntaría a la raíz del disco.
+# Carpeta del proyecto
 dir_proyecto <- "johan_steven_avilan_penaloza/parcial_01"
 
 source(file.path(dir_proyecto, "scraper.R"))
@@ -26,19 +25,18 @@ cat("SKU únicos (sin repetir): ", n_distinct(farmatodo$sku), "\n")
 cat("Precios faltantes:        ", sum(is.na(farmatodo$precio)), "\n")
 cat("Con vendedor externo:     ", sum(!is.na(farmatodo$vendedor)), "\n")
 
-# Filas sin SKU o sin URL (idealmente 0)
+# Filas sin SKU o sin URL
 farmatodo |> filter(is.na(sku) | is.na(url)) |>
   select(sku, nombre_original, precio, url, subcategoria_origen)
 
-# SKU repetidos de verdad (idealmente 0 filas)
+# SKU repetidos de verdad
 farmatodo |> filter(!is.na(sku)) |> count(sku) |> filter(n > 1)
 
-# Productos sin precio (en la ejecución del 04-10 eran 2, ambos agotados)
+# Productos sin precio 
 farmatodo |> filter(is.na(precio)) |>
   select(sku, nombre_original, precio_bloque_original, subcategoria_origen)
 
-# ---- 3. Respaldo de la tabla (NO va en raw/) ---------------------------
-# raw/ guarda el HTML original; esto es solo la tabla ya procesada.
+# ---- 3. Respaldo de la tabla. -----------------------------------------
 dir_datos <- file.path(dir_proyecto, "datos")
 dir.create(dir_datos, recursive = TRUE, showWarnings = FALSE)
 
@@ -49,7 +47,6 @@ write.csv(farmatodo, file.path(dir_datos, paste0("farmatodo_", fecha, ".csv")),
 list.files(dir_datos)
 
 # ---- 4. Prueba del MODO SIN CONEXIÓN -----------------------------------
-# Reprocesa las copias crudas sin abrir Chrome ni consultar el sitio.
 farmatodo_off <- recolectar_farmatodo("offline", dir_raw, modo = "offline")
 
 nrow(farmatodo); nrow(farmatodo_off)
@@ -58,8 +55,6 @@ all.equal(farmatodo$precio[order(farmatodo$sku)],
           farmatodo_off$precio[order(farmatodo_off$sku)])   # debe dar TRUE
 
 # ---- 5. SEGUNDO Y TERCER COMERCIO (VTEX): La Rebaja y Locatel ----------
-# Van por el servicio JSON del propio sitio: sin Chrome, rápido, y con total
-# declarado por el sitio para verificar que la recolección está completa.
 dir_raw_lr  <- file.path(dir_proyecto, "raw", "la_rebaja", fecha)
 dir_raw_loc <- file.path(dir_proyecto, "raw", "locatel",   fecha)
 
@@ -85,8 +80,6 @@ resumen_vtex <- function(df) {
 resumen_vtex(la_rebaja)
 resumen_vtex(locatel)
 
-# Comprobación manual de precios: compara estas filas con lo que ves en el
-# sitio, en tu navegador, con la ciudad en Bogotá.
 la_rebaja |> filter(str_detect(nombre_original, regex("isodine|alcohol mk", ignore_case = TRUE))) |>
   select(nombre_original, presentacion_original, precio, precio_antes, es_promocion, disponible)
 
@@ -98,12 +91,11 @@ loc_off <- recolectar_vtex("Locatel", "www.locatelcolombia.com", "drogueria/cuid
 setequal(la_rebaja$sku, lr_off$sku)
 setequal(locatel$sku, loc_off$sku)
 
-# ---- 8. ¿Dónde viene el contenido (ej. 700 ml)? Inspección del JSON ------
-# Muestra todos los campos de un producto de cada comercio (sin descargar nada).
+# ---- 8. Salida de todos los campos de los productos para cada comercio ------
 leer_raw <- function(dir_raw) {
-  f <- list.files(dir_raw, pattern = "^pag_.*json$", full.names = TRUE)
+  f <- list.files(dir_raw, pattern = "^pag_.*json(\\.gz)?$", full.names = TRUE)
   unlist(lapply(f, function(x)
-    jsonlite::fromJSON(paste(readLines(x, encoding = "UTF-8", warn = FALSE), collapse = "\n"),
+    jsonlite::fromJSON(paste(readLines(gzfile(x), encoding = "UTF-8", warn = FALSE), collapse = "\n"),
                        simplifyVector = FALSE)), recursive = FALSE)
 }
 
@@ -117,16 +109,14 @@ for (p in list(p_lr, p_loc)) {
       "| unidad:", p$items[[1]]$measurementUnit, "| multiplicador:", p$items[[1]]$unitMultiplier, "\n")
 }
 
-# ---- 9. ¿Qué marcas tienen en común los tres comercios? -----------------
+# ---- 9. Marcas en común entre comercios -----------------
 norm <- function(x) x |> str_to_upper() |> stringi::stri_trans_general("Latin-ASCII") |> str_squish()
 comunes <- Reduce(intersect, list(unique(norm(farmatodo$marca_original)),
                                   unique(norm(la_rebaja$marca_original)),
                                   unique(norm(locatel$marca_original))))
 comunes
 
-# ---- 10. Reprocesar con el parser actualizado (SIN descargar nada) --------
-# Las respuestas ya están guardadas en raw/. Esto reconstruye las tablas con
-# las columnas nuevas de contenido y presentación, sin tocar los sitios.
+# ---- 10. Pruebas del modo offline para Locatel y la Rebaja --------
 la_rebaja <- recolectar_vtex("La Rebaja", "www.larebajavirtual.com", "drogueria/cuidado-de-la-herida",
                              paste0("larebaja_", fecha), dir_raw_lr, "offline")
 locatel   <- recolectar_vtex("Locatel", "www.locatelcolombia.com", "drogueria/cuidado-heridas",
@@ -140,7 +130,6 @@ locatel |> select(nombre_original, presentacion_original, contenido_origen,
                   contenido_unidad_origen, peso_origen, precio) |> head(8) |> print(width = Inf)
 
 # ---- 11. Árbol de categorías (para ubicar los antisépticos de Locatel) -----
-# Servicio de VTEX que lista las categorías reales de cada tienda.
 arbol_vtex <- function(dominio, niveles = 3) {
   u <- paste0("https://", dominio, "/api/catalog_system/pub/category/tree/", niveles)
   j <- request(u) |> req_user_agent("Mozilla/5.0 (taller universitario)") |>
@@ -159,10 +148,9 @@ arbol_loc |>
   print(n = 50, width = Inf)
 
 # ---- 13. Candidatos a productos comparables -------------------------------
-# La Rebaja y Locatel traen EAN (código de barras): las coincidencias por EAN
-# son el MISMO producto, sin ambigüedad. Farmatodo no trae EAN en el listado,
-# así que ahí se cruza por marca, nombre y contenido.
-sin_espacios <- function(x) x |> norm() |> str_remove_all("\\s")   # "CURE BAND" = "CUREBAND"
+# La Rebaja y Locatel traen EAN (código de barras), por lo que se usan para coincidir
+# Farmatodo no trae EAN en el listado, así que ahí se cruza por marca, nombre y contenido.
+sin_espacios <- function(x) x |> norm() |> str_remove_all("\\s")   
 
 solo_ean <- function(df) df |> filter(!is.na(ean), ean != "") |> distinct(ean, .keep_all = TRUE)
 
@@ -189,9 +177,8 @@ farmatodo |> mutate(m = sin_espacios(marca_original)) |> filter(m %in% marcas3) 
   select(sku, marca_original, nombre_original, precio) |> print(n = 100, width = Inf)
 
 # ---- 14. Crear la base SQLite y cargar lo que ya está en memoria ---------
-# Prueba rápida: NO consulta ningún sitio.
 ruta_db <- file.path(dir_proyecto, "comparador_precios.sqlite")
-if (file.exists(ruta_db)) file.remove(ruta_db)   # empezar de cero (el esquema cambió)
+if (file.exists(ruta_db)) file.remove(ruta_db)   
 con <- crear_base(ruta_db)
 
 cargar_ejecucion(con, farmatodo, "Farmatodo", n_subcats_esperadas = length(slugs_farmatodo))
@@ -206,6 +193,5 @@ DBI::dbGetQuery(con, "
   JOIN comercios c ON c.id_comercio = a.id_comercio
   GROUP BY c.nombre")
 
-# Repetir la carga NO debe duplicar nada (unicidad): las 3 deben dar 0 nuevas
 cargar_ejecucion(con, farmatodo, "Farmatodo", n_subcats_esperadas = length(slugs_farmatodo))
 DBI::dbDisconnect(con)
