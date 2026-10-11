@@ -25,7 +25,7 @@ Extrae productos de la categoría *Primeros auxilios y curación* (gasas, vendas
 3. Selecciona **`Download ZIP`**.
 4. Descomprime el archivo `.zip` en tu equipo y abre la carpeta `parcial_01` en **RStudio**.
 
-*(O bien [descarga directamente el archivo ZIP aquí](https://github.com/JohanAv1018/dm_2016325_2026_2/archive/refs/heads/main.zip)).*
+*(O bien [descarga directamente el archivo ZIP aquí](https://download-directory.github.io/?url=https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01)).*
 
 ---
 
