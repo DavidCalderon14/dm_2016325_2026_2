@@ -16,18 +16,6 @@ Extrae productos de la categoría *Primeros auxilios y curación* (gasas, vendas
 | **La Rebaja** | `/drogueria/cuidado-de-la-herida` | Servicio API JSON de VTEX (`/api/catalog_system/pub/products/search`) |
 | **Locatel** | `/drogueria/cuidado-heridas` | Servicio API JSON de VTEX (`/api/catalog_system/pub/products/search`) |
 
----
-
-## Cómo descargar el parcial
-
-
-*([haz clic aquí para descargar la carpeta del parcial](https://download-directory.github.io/?url=https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01)).*
-
-Una vez descargado el archivo `.zip`:
-1. Descomprime la carpeta en tu equipo.
-2. Abre la carpeta `parcial_01` en **RStudio**.
-
----
 
 ## Estructura de archivos
 
@@ -46,6 +34,20 @@ parcial_01/
 ├── renv.lock                   # Archivo de congelamiento de dependencias
 └── README.md                   # Documentación del proyecto
 ```
+
+---
+
+
+---
+
+## Cómo descargar el parcial
+
+
+*([haz clic aquí para descargar la carpeta del parcial](https://download-directory.github.io/?url=https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01)).*
+
+Una vez descargado el archivo `.zip`:
+1. Descomprime la carpeta en tu equipo.
+2. Abre la carpeta `parcial_01` en **RStudio**.
 
 ---
 
