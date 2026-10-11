@@ -18,14 +18,14 @@ Extrae productos de la categoría *Primeros auxilios y curación* (gasas, vendas
 
 ---
 
-## Cómo descargar el proyecto completo
+## Cómo descargar el parcial
 
-1. Ve a la página del repositorio en GitHub.
-2. Haz clic en el botón verde **`Code`** (arriba a la derecha).
-3. Selecciona **`Download ZIP`**.
-4. Descomprime el archivo `.zip` en tu equipo y abre la carpeta `parcial_01` en **RStudio**.
 
-*(O bien [descarga directamente el archivo ZIP aquí](https://download-directory.github.io/?url=https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01)).*
+*([haz clic aquí para descargar la carpeta del parcial](https://download-directory.github.io/?url=https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01)).*
+
+Una vez descargado el archivo `.zip`:
+1. Descomprime la carpeta en tu equipo.
+2. Abre la carpeta `parcial_01` en **RStudio**.
 
 ---
 
