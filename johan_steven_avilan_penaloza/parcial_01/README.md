@@ -1,6 +1,6 @@
 # Taller 1 — Comparador de precios: Primeros auxilios y curación
 
-**Autor:** Johan Steven Avilán Peñaloza  
+**Autor:** Johan Steven Avilan Peñaloza  
 **Curso:** Minería de Datos  
 **Lenguaje elegido:** R (extracción, limpieza, carga en SQLite, consultas y gráficos)  
 **Repositorio:** [dm_2016325_2026_2](https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01)
