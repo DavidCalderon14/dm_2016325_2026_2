@@ -7,7 +7,7 @@ Lenguaje: Python. Todos los comandos se ejecutan desde esta carpeta, porque las 
 ## Estructura
 
 ```
-parcial_1.qmd               documento de análisis (Quarto)
+taller_1.qmd                documento de análisis (Quarto)
 scraper.py                  extracción, limpieza y carga en SQLite 
 comparador_precios.sqlite   base con todas las ejecuciones
 raw/                        respuestas originales comprimidas: raw/<comercio>/<fecha>/<id_ejecucion>/
@@ -18,10 +18,10 @@ Cada carpeta de `raw/` tiene las respuestas descargadas (`pagina_*.json.gz`) y u
 
 ## Reprocesar sin conexión
 
-Dejar `ONLINE = False` en la primera celda de código de `parcial_1.qmd` y ejecutar:
+Dejar `ONLINE = False` en la primera celda de código de `taller_1.qmd` y ejecutar:
 
 ```
-quarto render parcial_1.qmd
+quarto render taller_1.qmd
 ```
 
 O abrirlo en RStudio, VS Code o Positron y ejecutar todas las celdas. El documento vuelve a leer las copias de `raw/`, las carga en `comparador_precios.sqlite` sin duplicar lo que ya estaba y repite la limpieza, la correspondencia, las consultas y los gráficos. No se conecta a ningún sitio.
@@ -30,7 +30,7 @@ Para reconstruir la base desde cero basta con borrar `comparador_precios.sqlite`
 
 ## Hacer una recolección nueva
 
-Con `ONLINE = True` en la primera celda de código de `parcial_1.qmd`, o desde la terminal:
+Con `ONLINE = True` en la primera celda de código de `taller_1.qmd`, o desde la terminal:
 
 ```
 python -c "import scraper; print(scraper.ejecutar_recoleccion(online=True))"
