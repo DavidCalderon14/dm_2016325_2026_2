@@ -37,18 +37,6 @@ parcial_01/
 
 ---
 
-
----
-
-## Cómo descargar el parcial
-
-
-*([haz clic aquí para descargar la carpeta del parcial](https://download-directory.github.io/?url=https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01)).*
-
-Una vez descargado el archivo `.zip`:
-1. Descomprime la carpeta en tu equipo.
-2. Abre la carpeta `parcial_01` en **RStudio**.
-
 ---
 
 ## Prerrequisitos e instalación
@@ -56,31 +44,47 @@ Una vez descargado el archivo `.zip`:
 1. **Entorno R:** requiere R v4.1 o superior.
 3. **Navegador web:** Google Chrome, requerido únicamente para la captura en vivo de Farmatodo mediante `chromote`.
 
-### Preparación del entorno (Instalar paquetes)
+---
 
-1. Abre **RStudio** y carga el proyecto desde la carpeta `parcial_01`.
+## Cómo descargar y cargar la carpeta del parcial
+
+[Haz clic aquí para descargar la carpeta del parcial](https://download-directory.github.io/?url=https://github.com/JohanAv1018/dm_2016325_2026_2/tree/main/johan_steven_avilan_penaloza/parcial_01).
+
+Una vez descargado el archivo `.zip`:
+
+1. Descomprime la carpeta en tu equipo.
+2. Abre **RStudio**.
+3. En el menú superior, selecciona **Session → Set Working Directory → Choose Directory...**.
+4. Busca y selecciona la carpeta `parcial_01` que descomprimiste.
+5. Haz clic en **Open**.
+
+## Preparación del entorno (Instalar paquetes)
+
+1. En el panel **Files**, busca el archivo `taller_1.qmd` y ábrelo.
 2. En la pestaña **Console** (abajo a la izquierda), ejecuta:
 
-```r
-renv::restore()
-```
+   ```r
+   renv::restore()
+   ```
+
+   Espera a que finalice la instalación de las dependencias del proyecto.
 
 ## Instrucciones de ejecución
 
 Este proyecto permite trabajar de dos formas desde **RStudio**:
 
-- **Modo Offline (predeterminado):** no requiere internet ni Chrome. Procesa y analiza los datos crudos previamente descargados en la carpeta `raw/`.
-- **Modo Online:** se conecta a los tres comercios, realiza el scraping en vivo, guarda copias en `raw/` y actualiza la base de datos SQLite.
+- **Modo Offline (predeterminado):** no requiere conexión a internet ni Google Chrome. Procesa y analiza los datos crudos previamente descargados en la carpeta `raw/`.
+- **Modo Online:** se conecta a los tres comercios, realiza el scraping en vivo, guarda copias de los datos en `raw/` y actualiza la base de datos SQLite.
 
 ### Opción 1: Modo Offline (Ver informe rápido)
 
-1. Abre el archivo **`taller_1.qmd`** en RStudio.
-2. Haz clic en el botón **Render** (icono de la flecha azul en la barra superior del editor).
-3. Se reconstruirá la base de datos a partir de `raw/` (si no existe) y se abrirá el informe **`taller_1.html`**.
+1. Abre el archivo `taller_1.qmd` en RStudio.
+2. Haz clic en el botón **Render**, ubicado en la barra superior del editor.
+3. Se reconstruirá la base de datos a partir de los archivos de `raw/`, si no existe, y se generará el informe `taller_1.html`.
 
 ### Opción 2: Modo Online (Recolección de datos en vivo)
 
-#### Paso A: Descargar datos actualizados
+#### Paso A. Descargar datos actualizados
 
 En la consola de RStudio, ejecuta:
 
@@ -89,24 +93,29 @@ source("scraper.R")
 ejecutar_recoleccion_completa(".", modo = "online")
 ```
 
-#### Paso B: Generar el informe con los nuevos datos
+Espera a que termine la recolección de datos de los tres comercios. Los archivos capturados se guardarán en `raw/` y las nuevas observaciones se incorporarán a la base de datos SQLite.
 
-Abre **`taller_1.qmd`** y presiona el botón **Render** en RStudio.
+#### Paso B. Generar el informe con los nuevos datos
+
+1. Abre `taller_1.qmd` en RStudio.
+2. Haz clic en **Render** para generar el informe `taller_1.html` con los datos actualizados.
+
+**Nota:** la recolección Online y la generación del informe son pasos independientes. Para consultar los datos ya almacenados sin realizar nuevas peticiones web, utiliza el modo Offline.
 
 ## Decisiones de diseño y arquitectura
 
 - **Estandarización limpia:** la marca (`anuncios.marca`), el nombre (`nombre_estandar`), la subcategoría y las unidades de medida se limpian en campos dedicados. El texto original capturado se conserva intacto en columnas adyacentes.
 - **Manejo de productos agotados:** los artículos sin stock conservan su registro, pero asignando `precio = NULL` (nunca cero) para evitar sesgar las métricas de precio.
 - **Filtros de exclusión:** reglas explícitas descartan artículos fuera de alcance (guantes, tapabocas, jeringas, ostomías, etc.), registrando la razón en `anuncios.motivo_exclusion`.
-- **Mapeo de comparables:** la vinculación de los ocho productos representativos utiliza el código de barras (EAN) para tiendas VTEX (La Rebaja y Locatel) y expresiones regulares sobre el nombre comercial para Farmatodo.
+- **Mapeo de comparables:** la vinculación de los ocho productos representativos utiliza el código de barras (EAN) para las tiendas VTEX (La Rebaja y Locatel) y expresiones regulares sobre el nombre comercial para Farmatodo.
 - **Identificación única:** un producto es único por `(comercio, SKU)`, mientras que una observación es única por `(anuncio, fecha_captura)`.
 
 ## Consultas y análisis de datos
 
-Las analíticas incluidas en el informe combinan sentencias SQL avanzadas (`INNER/LEFT JOIN`, subconsultas, `WITH` / CTEs encadenadas y funciones de ventana como `RANK() OVER` y `LAG`) ejecutadas sobre la base SQLite mediante `DBI::dbGetQuery()`.
+Las analíticas incluidas en el informe combinan sentencias SQL avanzadas (`INNER/LEFT JOIN`, subconsultas, `WITH` / CTEs encadenadas y funciones de ventana como `RANK() OVER` y `LAG`), ejecutadas sobre la base de datos SQLite mediante `DBI::dbGetQuery()`.
 
 ## Cumplimiento ético y límites
 
-- **Frecuencia de peticiones:** pausas programadas entre peticiones HTTP (1 segundo en las API de VTEX y varios segundos en la interacción con el DOM de Farmatodo).
+- **Frecuencia de peticiones:** pausas programadas entre peticiones HTTP (1 segundo en las API de VTEX y varios segundos durante la interacción con el DOM de Farmatodo).
 - **Identificación de cliente:** reintentos limitados y uso de un *User-Agent* académico explícito.
-- **Revisión de `robots.txt`:** se verificaron las políticas de scraping de los tres comercios, confirmando acceso permitido a las rutas públicas de consulta.
+- **Revisión de `robots.txt`:** se verificaron las políticas de scraping de los tres comercios, confirmando el acceso permitido a las rutas públicas de consulta.
