@@ -18,6 +18,17 @@ Extrae productos de la categoría *Primeros auxilios y curación* (gasas, vendas
 
 ---
 
+## Cómo descargar el proyecto completo
+
+1. Ve a la página del repositorio en GitHub.
+2. Haz clic en el botón verde **`Code`** (arriba a la derecha).
+3. Selecciona **`Download ZIP`**.
+4. Descomprime el archivo `.zip` en tu equipo y abre la carpeta `parcial_01` en **RStudio**.
+
+*(O bien [descarga directamente el archivo ZIP aquí](https://github.com/JohanAv1018/dm_2016325_2026_2/archive/refs/heads/main.zip)).*
+
+---
+
 ## Estructura de archivos
 
 ```text
@@ -41,86 +52,44 @@ parcial_01/
 ## Prerrequisitos e instalación
 
 1. **Entorno R:** requiere R v4.1 o superior.
-2. **Quarto CLI:** instalado para la generación del reporte técnico en HTML.
 3. **Navegador web:** Google Chrome, requerido únicamente para la captura en vivo de Farmatodo mediante `chromote`.
 
-### Restaurar las dependencias del proyecto
+### Preparación del entorno (Instalar paquetes)
 
-Antes de ejecutar cualquier script, abre la terminal en la raíz del proyecto y restaura los paquetes instalados en `renv.lock`:
+1. Abre **RStudio** y carga el proyecto desde la carpeta `parcial_01`.
+2. En la pestaña **Console** (abajo a la izquierda), ejecuta:
 
 ```r
 renv::restore()
 ```
 
----
-
 ## Instrucciones de ejecución
 
-El proyecto soporta dos flujos de trabajo: **Offline** (reprocesamiento rápido sin peticiones web) y **Online** (scraping en tiempo real).
+Este proyecto permite trabajar de dos formas desde **RStudio**:
 
-### Resumen rápido de comandos
+- **Modo Offline (predeterminado):** no requiere internet ni Chrome. Procesa y analiza los datos crudos previamente descargados en la carpeta `raw/`.
+- **Modo Online:** se conecta a los tres comercios, realiza el scraping en vivo, guarda copias en `raw/` y actualiza la base de datos SQLite.
 
-| Objetivo | Comando a ejecutar |
-|---|---|
-| **Instalar dependencias** | `Rscript -e "renv::restore()"` |
-| **Generar informe (Offline)** | `quarto render taller_1.qmd` |
-| **Actualizar datos desde internet** | `Rscript -e 'source("scraper.R"); ejecutar_recoleccion_completa(".", modo="online")'` |
-| **Actualizar datos + generar informe** | `MODO=online quarto render taller_1.qmd` *(Linux/macOS)* |
+### Opción 1: Modo Offline (Ver informe rápido)
 
----
+1. Abre el archivo **`taller_1.qmd`** en RStudio.
+2. Haz clic en el botón **Render** (icono de la flecha azul en la barra superior del editor).
+3. Se reconstruirá la base de datos a partir de `raw/` (si no existe) y se abrirá el informe **`taller_1.html`**.
 
-### Opción 1: Ejecución sin conexión / Reprocesamiento (Offline)
+### Opción 2: Modo Online (Recolección de datos en vivo)
 
-Es el modo predeterminado. No realiza peticiones a internet ni requiere Chrome. Reconstruye la base de datos `comparador_precios.sqlite` (si fue eliminada) a partir de los archivos almacenados en `raw/` y genera el informe final HTML.
+#### Paso A: Descargar datos actualizados
 
-#### Desde la terminal del sistema (Bash / PowerShell / CMD)
-
-```bash
-quarto render taller_1.qmd
-```
-
-#### Desde la consola interactiva de R
-
-```r
-quarto::quarto_render("taller_1.qmd")
-```
-
----
-
-### Opción 2: Recolección de datos en vivo (Online)
-
-Ejecuta el scraping sobre las tres tiendas, guarda los datos crudos en `raw/<comercio>/<fecha>/`, registra la auditoría de ejecución y añade las nuevas observaciones a SQLite sin sobrescribir las históricas.
-
-#### A. Solo ejecutar la recolección y actualizar SQLite
-
-Abre R en la raíz del proyecto y ejecuta:
+En la consola de RStudio, ejecuta:
 
 ```r
 source("scraper.R")
 ejecutar_recoleccion_completa(".", modo = "online")
 ```
 
-#### B. Recolectar datos en vivo y generar el informe renderizado
+#### Paso B: Generar el informe con los nuevos datos
 
-**En Linux/macOS:**
-
-```bash
-MODO=online quarto render taller_1.qmd
-```
-
-**En Windows (PowerShell):**
-
-```powershell
-$env:MODO="online"; quarto render taller_1.qmd
-```
-
-**En Windows (CMD):**
-
-```cmd
-set MODO=online && quarto render taller_1.qmd
-```
-
----
+Abre **`taller_1.qmd`** y presiona el botón **Render** en RStudio.
 
 ## Decisiones de diseño y arquitectura
 
@@ -130,16 +99,12 @@ set MODO=online && quarto render taller_1.qmd
 - **Mapeo de comparables:** la vinculación de los ocho productos representativos utiliza el código de barras (EAN) para tiendas VTEX (La Rebaja y Locatel) y expresiones regulares sobre el nombre comercial para Farmatodo.
 - **Identificación única:** un producto es único por `(comercio, SKU)`, mientras que una observación es única por `(anuncio, fecha_captura)`.
 
----
-
 ## Consultas y análisis de datos
 
 Las analíticas incluidas en el informe combinan sentencias SQL avanzadas (`INNER/LEFT JOIN`, subconsultas, `WITH` / CTEs encadenadas y funciones de ventana como `RANK() OVER` y `LAG`) ejecutadas sobre la base SQLite mediante `DBI::dbGetQuery()`.
 
----
-
 ## Cumplimiento ético y límites
 
-- **Frecuencia de peticiones:** pausas programadas entre peticiones HTTP (1 segundo en APIs VTEX y varios segundos en la interacción con el DOM de Farmatodo).
+- **Frecuencia de peticiones:** pausas programadas entre peticiones HTTP (1 segundo en las API de VTEX y varios segundos en la interacción con el DOM de Farmatodo).
 - **Identificación de cliente:** reintentos limitados y uso de un *User-Agent* académico explícito.
-- **Revisión de `robots.txt`:** se verificaron las políticas de scraping de las tres tiendas, confirmando acceso permitido a las rutas públicas de consulta.
+- **Revisión de `robots.txt`:** se verificaron las políticas de scraping de los tres comercios, confirmando acceso permitido a las rutas públicas de consulta.
