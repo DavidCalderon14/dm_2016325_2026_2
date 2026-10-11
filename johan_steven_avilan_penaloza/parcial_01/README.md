@@ -60,15 +60,20 @@ Una vez descargado el archivo `.zip`:
 
 ## Preparación del entorno (Instalar paquetes)
 
-1. En el panel **Files**, busca el archivo `taller_1.qmd` y ábrelo.
+1. En el panel **Files** de RStudio, busca el archivo `taller_1.qmd` y ábrelo.
 2. En la pestaña **Console** (abajo a la izquierda), ejecuta:
 
    ```r
    renv::restore()
    ```
 
-   Espera a que finalice la instalación de las dependencias del proyecto.
+3. Si aparece el mensaje indicando que el proyecto aún no ha sido activado (*"It looks like you've called renv::restore() in a project that hasn't been activated yet"*), selecciona la opción **1: Activate the project and use the project library**. Para ello, escribe `1` en la consola y presiona **Enter**.
 
+4. Si `renv` solicita confirmación para instalar los paquetes, acepta y espera a que termine el proceso.
+
+5. Una vez finalizada la instalación, puedes continuar con las instrucciones de ejecución del proyecto.
+
+**Nota:** la primera instalación puede tardar varios minutos, ya que se deben descargar e instalar las dependencias registradas en `renv.lock`. Se recomienda tener conexión a internet durante este paso.
 ## Instrucciones de ejecución
 
 Este proyecto permite trabajar de dos formas desde **RStudio**:
