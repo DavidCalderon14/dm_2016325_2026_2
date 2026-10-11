@@ -18,17 +18,17 @@ Extrae los productos de la categoría *Primeros auxilios y curación* (gasas, ve
 
 ```
 parcial_01/
-├── taller_1.qmd                  # informe reproducible (llama a las funciones de scraper.R)
-├── taller_1.html                 # informe renderizado
-├── scraper.R                     # módulo de extracción, carga en SQLite y correspondencia
-├── comparables.csv               # correspondencia de los 8 productos (generada por reglas, para auditoría)
-├── comparador_precios.sqlite     # base de datos
-├── raw/                          # copias crudas de las respuestas, por comercio y fecha
+├── taller_1.qmd                # informe reproducible (llama a las funciones de scraper.R)
+├── taller_1.html               # informe renderizado
+├── scraper.R                   # módulo de extracción, carga en SQLite y correspondencia
+├── comparables.csv             # correspondencia de los 8 productos (generada por reglas, para auditoría)
+├── comparador_precios.sqlite   # base de datos
+├── raw/                        # copias crudas de las respuestas, por comercio y fecha
 │   ├── farmatodo/AAAA-MM-DD/*.html.gz
-│   ├── la_rebaja/AAAA-MM-DD/pag_*.json
-│   └── locatel/AAAA-MM-DD/pag_*.json
-├── exploracion.R                 # script de trabajo usado durante el desarrollo
-├── renv.lock                     # dependencias con versiones fijas
+│   ├── la_rebaja/AAAA-MM-DD/pag_*.json(.gz)
+│   └── locatel/AAAA-MM-DD/pag_*.json(.gz)
+├── prueba_colab.ipynb          # cuaderno usado para probar el código en Google Colab
+├── renv.lock                   # dependencias con versiones fijas
 └── README.md
 ```
 
@@ -36,12 +36,7 @@ parcial_01/
 
 - R 4.1 o superior.
 - **Google Chrome** instalado (lo usa `read_html_live()` para Farmatodo).
-- Dependencias con versiones fijas en `renv.lock`:
 
-```r
-install.packages("renv")
-renv::restore()
-```
 
 ## Ejecución en línea (consulta los sitios)
 
@@ -87,7 +82,7 @@ quarto render taller_1.qmd
 
 ## Consultas SQL
 
-Las consultas del informe siguen la notación del taller de SQL de la clase: `INNER JOIN` y `LEFT JOIN`, subconsultas, CTEs encadenadas (`WITH`) y funciones de ventana (`RANK() OVER`, `LAG`). Se ejecutan con `dbGetQuery()` y se muestran con `mostrar_tabla()`.
+Las consultas del informe se realizan con: `INNER JOIN` y `LEFT JOIN`, subconsultas, CTEs encadenadas (`WITH`) y funciones de ventana (`RANK() OVER`, `LAG`). Se ejecutan con `dbGetQuery()` y se muestran con `mostrar_tabla()`.
 
 ## Limitaciones
 
@@ -97,4 +92,4 @@ Las consultas del informe siguen la notación del taller de SQL de la clase: `IN
 
 ## Cumplimiento ético
 
-Pausa de 1 segundo entre peticiones a las tiendas VTEX y de varios segundos entre acciones en Farmatodo, reintentos limitados, *user agent* que identifica el uso académico en las peticiones HTTP, y consulta únicamente de páginas públicas de categoría. Se revisaron el `robots.txt` y los términos de los tres sitios: ninguna ruta consultada está bloqueada (detalle en el informe, sección «Cumplimiento»). Prueba desde otro entorno (Colab/GitHub Actions): **[COMPLETAR]**.
+Pausa de 1 segundo entre peticiones a las tiendas VTEX y de varios segundos entre acciones en Farmatodo, reintentos limitados, *user agent* que identifica el uso académico en las peticiones HTTP, y consulta únicamente de páginas públicas de categoría. Se revisaron el `robots.txt` y los términos de los tres sitios: ninguna ruta consultada está bloqueada (detalle en el informe, sección «Cumplimiento»). Prueba desde otro entorno (Colab/GitHub Actions): Prueba en Google Colab (runtime de R): el modo sin conexión y la extracción en línea de La Rebaja y Locatel funcionaron; Farmatodo no se ejecutó allí por falta del paquete `chromote` (ya incluido en las dependencias).

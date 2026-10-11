@@ -1,5 +1,5 @@
 if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
-pacman::p_load(rvest, httr2, jsonlite, DBI, RSQLite, dplyr, stringr, purrr, tibble)
+pacman::p_load(rvest, httr2, jsonlite, DBI, RSQLite, dplyr, stringr, purrr, tibble, chromote)
 
 # ---- Constantes de Farmatodo -----------------------------------------
 

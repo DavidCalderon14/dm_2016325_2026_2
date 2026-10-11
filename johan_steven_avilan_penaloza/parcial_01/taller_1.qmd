@@ -41,6 +41,8 @@ Todo el proceso (extracción, limpieza, carga en SQLite, consultas y gráficos) 
 
 La Rebaja y Locatel declaran el total de productos de la sección en la cabecera de la respuesta, y eso permite comprobar que la extracción está completa. En Farmatodo no existe ese total, y la completitud se verifica porque el botón "Cargar más" desaparece y el conteo deja de crecer.
 
+Los sitios se visualizaron desde **Bogotá** para contrastar precios. La Rebaja indica que sus precios varían según la ciudad de entrega, y Locatel y Farmatodo que sus precios y promociones en línea pueden diferir de los de las tiendas físicas. Las consultas al servicio de catálogo VTEX (La Rebaja y Locatel) no fijan una ciudad explícita, por lo que devuelven el precio por defecto del sitio.
+
 ## Estrategia de extracción y selectores
 
 **Farmatodo (página dinámica).** Las tarjetas de producto se cargan con JavaScript y el listado inicial trae solo 24 productos. El desplazamiento (*scroll*) no carga más: lo que carga más es el botón **«Cargar más»**, que el código pulsa (a través de `chromote`, la sesión que abre `rvest::read_html_live()`) hasta que el número de productos deja de crecer, con una espera adicional de 6 segundos antes de darlo por agotado. Con una petición HTTP simple solo se obtenían 56 productos por sección (un tope del HTML inicial), y por eso se usa el navegador automatizado. Se recorren cuatro subcategorías de *Botiquín y primeros auxilios*: `curitas-algodones-adhesivos-y-botiquin`, `antisepticos`, `vendas` y `compresas`. Las subcategorías **«Jeringas, guantes y material hospitalario»** y **«Aparatos médicos y pastilleros»** se excluyeron por completo por no pertenecer a la categoría.
@@ -55,7 +57,7 @@ La Rebaja y Locatel declaran el total de productos de la sección en la cabecera
 | Precio por unidad que muestra el sitio | `.product-card-handler__pum` |
 | Vendedor externo | texto «Vendido por: ...» dentro de la tarjeta |
 
-**La Rebaja y Locatel (tiendas VTEX).** Las clases de la página (`vtex-product-summary-...`) y las imágenes alojadas en `*.vtexassets.com` revelaron la plataforma. En lugar de automatizar el navegador se consulta el servicio de catálogo que VTEX expone y que la propia página usa: `https://<dominio>/api/catalog_system/pub/products/search/<ruta de la categoría>?_from=<i>&_to=<j>`. Devuelve JSON con hasta 50 productos por llamada (código HTTP 206, contenido parcial) y el total de la categoría en la cabecera `resources` (por ejemplo `0-49/164`); el código recorre los rangos hasta cubrir ese total. Se consultó la sección completa de cada comercio (`drogueria/cuidado-de-la-herida` en La Rebaja y `drogueria/cuidado-heridas` en Locatel, que incluye ostomías, excluidas luego por regla).
+**La Rebaja y Locatel.** Las dos tiendas están construidas sobre la misma plataforma de comercio electrónico (VTEX); se nota en el código de sus páginas y en que sus imágenes se guardan en `vtexassets.com`. Esa plataforma tiene una dirección pública que entrega el listado de productos de una sección ya ordenado (nombre, marca, precio, código de barras, etc.), sin necesidad de abrir un navegador ni leer la pantalla. Por eso, en estas dos tiendas se pidió directamente ese listado, de 50 en 50 productos, hasta cubrir toda la sección. Además, el sitio informa cuántos productos tiene la sección (por ejemplo, 164 en La Rebaja), y eso permitió comprobar que no faltó ninguno. Se consultó la sección completa de cada comercio: «cuidado de la herida» en La Rebaja y «cuidado heridas» en Locatel (esta última incluye productos de ostomías, que se descartan después con una regla explícita). 
 
 ## Buenas prácticas aplicadas
 
@@ -69,21 +71,26 @@ La Rebaja y Locatel declaran el total de productos de la sección en la cabecera
 
 Se revisaron el `robots.txt` y los términos de cada sitio en octubre de 2026.
 
-| Comercio | `robots.txt` | Rutas que usa el código | Términos revisados |
-|---|---|---|---|
-| Farmatodo | Para todos los agentes bloquea `/checkout*`, `/cuenta/*`, `/buscar*`, `/busqueda*`, `/sugeridos*`, `/destacados*` y `/producto/*/review`, y prohíbe todo a los agentes «Scrapy 2.7.1» y «Scrapy 2.8.0». No fija pausa entre peticiones. | Páginas de categoría de *Botiquín y primeros auxilios* (no bloqueadas). No usa la búsqueda ni abre fichas de producto. | No mencionan la extracción automatizada. Prohíben la ingeniería inversa del código o los algoritmos del sitio (cláusula 5, vi), que no se realiza, y reservan los derechos sobre imágenes y texto (cláusula 11), por lo que no se descargan imágenes. Advierten que los precios pueden contener errores y diferir de los de las tiendas físicas (cláusulas 15.1 y 16). |
-| La Rebaja | Bloquea `/account/*`, `/login/*`, `/checkout/*`, `/busca/*`, `/quick-view/*`, `/espiar/*` y `/cloxaquim`. No menciona `/api/`. | Sección `/drogueria/cuidado-de-la-herida` y el servicio de catálogo `/api/catalog_system/pub/products/search/` (no bloqueados). | Los términos y condiciones generales no mencionan la extracción automatizada. Indican que los precios del sitio difieren de los de los puntos de venta y varían según la ciudad de entrega o recogida, y que pueden modificarse en cualquier momento. |
-| Locatel | Bloquea áreas del sistema (`/account`, `/checkout/`, `/busca`, `/search`, `/_v/`, entre otras), parámetros de retorno y rangos de precio. No menciona `/api/` ni `/drogueria/`. | Sección `/drogueria/cuidado-heridas` y el mismo servicio de catálogo (no bloqueados). | La página de políticas comerciales (envíos, financiación y campañas) no trata la extracción automatizada. |
+### `robots.txt`
 
-Ninguna de las rutas consultadas está bloqueada por el `robots.txt` de su sitio. Los términos revisados no prohíben expresamente la consulta automatizada de información pública del catálogo, pero tampoco la autorizan. Por eso la extracción se limitó a lo necesario para el taller: solo páginas públicas de categoría (sin iniciar sesión, sin carrito ni búsqueda), a un ritmo bajo (unas decenas de peticiones por ejecución), sin descargar imágenes y con fines exclusivamente académicos. Farmatodo bloquea expresamente a los rastreadores Scrapy, lo que indica que no desea el rastreo masivo con esa herramienta; este trabajo no usa Scrapy ni rastrea el sitio, sino que lee unas pocas páginas de categoría con baja frecuencia.
+| Comercio | Rutas que bloquea para todos los agentes | ¿Afecta lo que se consulta? |
+|:-----|:--------------------------|:-------------------|
+| **Farmatodo** | `/checkout*`, `/cuenta/*`, `/buscar*`, `/busqueda*`, `/sugeridos*`, `/destacados*`, `/producto/*/review`. Además prohíbe todo a los agentes «Scrapy 2.7.1» y «Scrapy 2.8.0». | No. Se leen páginas de categoría de *Botiquín y primeros auxilios*. No se usa la búsqueda ni se abren fichas de producto. |
+| **La Rebaja** | `/account/*`, `/login/*`, `/checkout/*`, `/busca/*`, `/quick-view/*`, `/espiar/*`, `/cloxaquim`. | No. Se usan `/drogueria/cuidado-de-la-herida` y el servicio `/api/catalog_system/pub/products/search/`. |
+| **Locatel** | `/account`, `/checkout/`, `/busca`, `/search`, `/_v/` y otras áreas del sistema, parámetros de retorno y rangos de precio. | No. Se usan `/drogueria/cuidado-heridas` y el mismo servicio de catálogo. |
 
-::: {.callout-warning}
-**Pendiente de completar por el autor:**
+Ninguno de los tres `robots.txt` menciona `/api/` ni fija una pausa entre peticiones.
 
-1. La **delimitación de la categoría** tal como figura en la planilla «Categorías de Productos - Estudiantes».
-2. La **ciudad** con la que se compararon los precios en el navegador.
-3. El resultado de **probar el código desde otro entorno** (por ejemplo Google Colab).
-:::
+### Términos de uso
+
+- **Farmatodo.** No mencionan la extracción automatizada. Prohíben la ingeniería inversa del código o los algoritmos del sitio (cláusula 5, vi), que no se realiza, y reservan los derechos sobre imágenes y texto (cláusula 11), por lo que no se descargan imágenes. Advierten que los precios pueden contener errores y diferir de los de las tiendas físicas (cláusulas 15.1 y 16).
+- **La Rebaja.** Los términos y condiciones generales no mencionan la extracción automatizada. Los **términos de uso** (cláusula 4.4) declaran de propiedad exclusiva de Copservir los contenidos, textos y bases de datos del sitio, y prohíben copiarlos, reproducirlos, crear trabajos derivados o distribuirlos sin permiso escrito; solo conceden una licencia personal y no comercial para copiar los contenidos sin modificarlos. Indican además que los precios del sitio difieren de los de los puntos de venta y varían según la ciudad (cláusula 4.11).
+- **Locatel.** Sus términos y condiciones (última modificación: 6 de mayo de 2020) no mencionan expresamente la extracción automatizada. Prohíben usar dispositivos o software para obstruir el sitio o acceder a información no autorizada, vender o distribuir con fines comerciales el material del sitio, y copiar o adaptar su código HTML para generar páginas (cláusula 4). Advierten que precios e información pueden contener errores (cláusula 5) y que los precios y promociones varían entre canales (cláusula 6).
+
+
+### Conclusión
+
+Ninguna de las rutas consultadas está bloqueada por el `robots.txt` de su sitio, y ninguno de los términos revisados prohíbe expresamente la consulta automatizada de datos públicos del catálogo. Sin embargo, los términos de uso de La Rebaja reservan los derechos sobre los contenidos y las bases de datos del sitio y permiten copiarlos solo para uso personal y no comercial. Este trabajo se mueve dentro de ese marco por ser un ejercicio académico y no comercial: se consultan únicamente páginas públicas de categoría (sin iniciar sesión, sin carrito ni búsqueda), a un ritmo bajo (unas decenas de peticiones por ejecución), no se descargan imágenes y se analizan datos factuales (nombre, marca, presentación y precio). Se reconoce, no obstante, que las copias crudas de `raw/` reproducen contenido de los sitios (incluidas descripciones de producto en las respuestas de La Rebaja y Locatel), por lo que su difusión fuera del ámbito del curso no estaría amparada por esos términos. Farmatodo bloquea expresamente a los rastreadores Scrapy, lo que indica que no desea el rastreo masivo con esa herramienta; este trabajo no usa Scrapy ni rastrea el sitio, sino que lee unas pocas páginas de categoría con baja frecuencia.
 
 ---
 
@@ -344,7 +351,7 @@ fecha_ref <- dbGetQuery(con, "SELECT fecha FROM v_referencia;")$fecha
 
 Las consultas siguen la notación vista en clase: `INNER JOIN` y `LEFT JOIN`, subconsultas, **CTEs encadenadas** (`WITH`) y **funciones de ventana** (`RANK() OVER`, `LAG`, `SUM() OVER`). Las preguntas 3 a 6 trabajan con la **fecha de referencia** (`r fecha_ref`).
 
-## Pregunta 1. ¿Cuántos comercios, productos y observaciones contiene la base?
+## ¿Cuántos comercios, productos y observaciones contiene la base?
 
 ```{r q1}
 resultado <- dbGetQuery(con, "
@@ -370,7 +377,7 @@ mostrar_tabla(q1b, caption = "Productos y observaciones por comercio")
 
 **Interpretación.** La base reúne `r nrow(q1b)` comercios y `r format(sum(q1b$productos), big.mark = ".")` anuncios de productos. El comercio con más oferta en la categoría es **`r q1b$comercio[which.max(q1b$productos)]`** (`r max(q1b$productos)` productos). Esa cifra incluye los productos que luego se excluyen de la categoría (pregunta 8).
 
-## Pregunta 2. ¿Hay al menos 24 observaciones comparables en una misma ejecución? ¿Hay repetidos?
+## ¿Hay al menos 24 observaciones comparables en una misma ejecución? ¿Hay repetidos?
 
 ```{r q2}
 cob <- dbGetQuery(con, "
@@ -399,7 +406,7 @@ if (nrow(repetidos) == 0) {
 
 **Interpretación.** La fecha de referencia es **`r fecha_ref`**: en ella hay `r cob$observaciones_comparables[cob$fecha == fecha_ref]` observaciones comparables (mínimo exigido: 24 = 8 productos × 3 comercios). `r if (nrow(repetidos) == 0) "No hay registros repetidos del mismo producto y comercio en una misma ejecución." else paste("Se encontraron", nrow(repetidos), "casos repetidos.")`
 
-## Pregunta 3. Precio mínimo, máximo y promedio por presentación comparable
+## Precio mínimo, máximo y promedio por presentación comparable
 
 Se usan dos CTEs encadenadas: `base` (precios de la fecha de referencia) y `estadisticos` (mínimo, máximo y promedio). Si hay empate en el precio mínimo, aparece una fila por cada comercio empatado.
 
@@ -442,7 +449,7 @@ empates   <- sum(table(q3$id) > 1)
 
 **Interpretación.** **`r names(which.max(ganadores))`** ofreció el menor precio en `r max(ganadores)` de las `r n_prod` presentaciones (los empates cuentan para cada comercio empatado; hubo `r empates` empate(s)).
 
-## Pregunta 4. Ahorro al elegir la oferta más económica
+## Ahorro al elegir la oferta más económica
 
 El ahorro se mide frente a la **oferta más cara** de cada presentación.
 
@@ -475,7 +482,7 @@ mostrar_tabla(q4, caption = "Ahorro de elegir la oferta más barata frente a la 
 
 **Interpretación.** El ahorro promedio de elegir la opción más barata es de **COP `r format(round(mean(q4$ahorro_cop)), big.mark = ".")`** (`r round(mean(q4$ahorro_pct), 1)` %), con un máximo de `r max(q4$ahorro_pct)` % en *`r q4$producto[which.max(q4$ahorro_pct)]`*.
 
-## Pregunta 5. Menor precio por unidad (mL, m o unidad)
+## Menor precio por unidad (mL, m o unidad)
 
 Se calcula el precio por unidad de contenido y se ordena con `RANK() OVER (PARTITION BY ...)`; el puesto 1 es la opción más económica por unidad.
 
@@ -514,7 +521,7 @@ mostrar_tabla(q5[q5$puesto == 1, ], caption = "Opción más económica por unida
 
 **Interpretación.** La tabla muestra, para cada producto, la opción con el menor precio por unidad de contenido. Como los ocho productos se definieron con el **mismo contenido** en los tres comercios, el menor precio por unidad coincide con el menor precio absoluto de la pregunta 3. El cálculo queda disponible para presentaciones de distinto tamaño.
 
-## Pregunta 6. Mayores diferencias de precio entre comercios
+## Mayores diferencias de precio entre comercios
 
 Se combinan una CTE con dos `RANK() OVER` (del más barato y del más caro) y un `CASE WHEN` para extraer el comercio de cada extremo. Si hay empate en un extremo, se muestra el primero por orden alfabético.
 
@@ -562,7 +569,7 @@ mostrar_tabla(q6, caption = "Productos ordenados por la brecha porcentual entre 
 
 **Interpretación.** La mayor brecha porcentual está en *`r q6$producto[1]`*: `r q6$ahorro_pct[1]` % entre el comercio más barato (`r q6$mas_barato[1]`) y el más caro (`r q6$mas_caro[1]`). La menor está en *`r q6$producto[nrow(q6)]`* (`r q6$ahorro_pct[nrow(q6)]` %).
 
-## Pregunta 7. Datos faltantes o inconsistentes
+## Datos faltantes o inconsistentes
 
 ```{r q7}
 q7 <- dbGetQuery(con, "
@@ -588,7 +595,7 @@ mostrar_tabla(q7, caption = "Datos faltantes o inconsistentes por comercio (obse
 
 **Interpretación.** Los productos agotados quedan con precio `NULL` (nunca 0) y se excluyen de los cálculos de precios: son `r sum(q7$sin_precio)` observaciones. Farmatodo no publica código de barras ni descripción en el listado, y por eso la comparación con ese comercio depende de la marca, el nombre y el contenido. En Locatel el contenido de algunos productos solo está en el nombre (por ejemplo, "x 12 und"), y el campo de unidad de medida del sitio no siempre es el contenido real.
 
-## Pregunta 8. Tamaño de la oferta y calidad de los datos por comercio
+## Tamaño de la oferta y calidad de los datos por comercio
 
 ```{r q8}
 q8a <- dbGetQuery(con, "
@@ -640,6 +647,20 @@ mostrar_tabla(q8b, caption = "Proporción de anuncios con descripción, marca y 
 
 # Visualizaciones
 
+```{r etiquetas}
+#| include: false
+etiquetas <- c(
+  "1" = "Alcohol MK 700 mL",
+  "2" = "Micropore Nexcare 12 mm",
+  "3" = "Micropore Nexcare 24 mm",
+  "4" = "Curas Cure Band x 10",
+  "5" = "Microporo Cure Band 5 cm",
+  "6" = "Fixo Roll Cure Band 10 cm",
+  "7" = "Gasa Alfa Safe 3x3 x 12",
+  "8" = "Transpore Nexcare 24 mm"
+)
+```
+
 ```{r g1}
 #| fig-cap: "Precio de cada presentación comparable por comercio (fecha de referencia)."
 #| fig-height: 5
@@ -648,23 +669,33 @@ datos_ref <- dbGetQuery(con, "
   FROM       v_comparables v
   INNER JOIN v_referencia  r ON v.fecha = r.fecha;
 ")
-ggplot(datos_ref, aes(x = precio, y = reorder(producto, precio, FUN = min), color = comercio)) +
+datos_ref$etiqueta <- unname(etiquetas[as.character(datos_ref$id_comparable)])
+
+ggplot(datos_ref, aes(x = precio, y = reorder(etiqueta, precio, FUN = min), color = comercio)) +
   geom_point(size = 3.5) +
-  scale_x_continuous(labels = label_number(big.mark = ".", decimal.mark = ",")) +
+  scale_x_continuous(labels = label_number(scale = 1e-3, suffix = " mil", big.mark = "."),
+                     breaks = breaks_pretty(n = 5)) +
   labs(x = "Precio (COP)", y = NULL, color = "Comercio",
        title = "¿Dónde es más barato cada producto?") +
-  theme_minimal(base_size = 12)
+  theme_minimal(base_size = 12) +
+  theme(plot.title.position = "plot")
 ```
 
 ```{r g2}
 #| fig-cap: "Ahorro porcentual al elegir la oferta más barata frente a la más cara."
 #| fig-height: 4.5
-ggplot(q4, aes(x = ahorro_pct, y = reorder(producto, ahorro_pct))) +
+q4$etiqueta <- unname(etiquetas[as.character(q4$id)])
+
+ggplot(q4, aes(x = ahorro_pct, y = reorder(etiqueta, ahorro_pct))) +
   geom_col(fill = "#2c7fb8") +
-  geom_text(aes(label = paste0(ahorro_pct, " %")), hjust = -0.1, size = 3.5) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.15))) +
-  labs(x = "Ahorro (%)", y = NULL, title = "Diferencia entre el comercio más caro y el más barato") +
-  theme_minimal(base_size = 12)
+  geom_text(aes(label = paste0(scales::number(ahorro_pct, accuracy = 0.1, decimal.mark = ","),
+                               " %  (COP ", scales::number(ahorro_cop, accuracy = 1, big.mark = "."), ")")),
+            hjust = -0.05, size = 3.5) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.5))) +
+  labs(x = "Ahorro (%) frente a la oferta más cara", y = NULL,
+       title = "Ahorro al elegir el comercio más barato") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title.position = "plot")
 ```
 
 ```{r g3}
@@ -701,21 +732,23 @@ ggplot(todos, aes(x = comercio, y = precio, fill = comercio)) +
 
 En la fecha de referencia (**`r fecha_ref`**), **`r names(which.max(ganadores))`** fue el comercio con más precios mínimos (`r max(ganadores)` de `r n_prod` presentaciones comparables). Elegir la oferta más barata de cada producto ahorra en promedio **`r round(mean(q4$ahorro_pct), 1)` %** frente a la más cara, con diferencias de hasta **`r max(q4$ahorro_pct)` %** (*`r q4$producto[which.max(q4$ahorro_pct)]`*). La recomendación práctica es comparar antes de comprar, porque ningún comercio es el más barato en todos los productos, salvo que la tabla de la pregunta 3 muestre lo contrario.
 
+Si se compran los ocho productos siempre en el comercio más barato, la canasta cuesta **COP `r format(sum(q4$minimo), big.mark = ".")`**, frente a **COP `r format(sum(q4$maximo), big.mark = ".")`** en el más caro: un ahorro potencial de **COP `r format(sum(q4$ahorro_cop), big.mark = ".")`** (`r round(100 * sum(q4$ahorro_cop) / sum(q4$maximo), 1)` %).
+
 ---
 
 # Limitaciones
 
-- **Fecha y condiciones de captura.** Los precios son los observados en el momento de la consulta. Los tres comercios usan campañas y descuentos temporales: por ejemplo, un mismo producto apareció con precio tachado y descuento de 10 % en el servicio de La Rebaja. Además, los sitios advierten que los precios pueden variar según la ciudad de entrega, y la consulta no fijó una ciudad.
+- **Los precios son de un momento.** Son los que mostraban los sitios cuando se hizo cada consulta, y cambian con frecuencia. Los tres comercios usan descuentos temporales: por ejemplo, el alcohol MK de La Rebaja apareció el 7 de octubre con un precio de lista de $11.700 y un precio vigente de $10.530 (un 10 % menos), y el 9 de octubre ya costaba $11.700. Además, los comercios publicaron campañas durante esos días: Locatel anuncia en su página de políticas comerciales «Descuentos 1Q» (1 al 15 de octubre de 2026), «Cuidado Personal» (8 al 10) y «Segunda unidad con el 50 %» (9 y 10), con descuentos sobre el precio máximo de venta al público. Por eso, una diferencia de precio entre el 7 y el 9 de octubre puede deberse a una campaña y no a un cambio del precio regular.
+- **La ciudad y el canal de venta importan.** La Rebaja indica que sus precios varían según la ciudad de entrega, y Locatel y Farmatodo que sus precios en línea pueden diferir de los de sus tiendas físicas. Los sitios se visualizaron desde Bogotá, pero las consultas a La Rebaja y Locatel no fijan una ciudad y devuelven el precio por defecto del sitio. Los resultados no deben extrapolarse a otras ciudades ni a las tiendas físicas.
+- **Pocos productos comparables.** Solo se compararon los ocho productos que se encontraron idénticos en los tres comercios, y seis de ellos son de dos marcas (Cure Band y Nexcare). Las conclusiones valen para esos productos y no para toda la categoría.
+- **Cómo se confirmó que es el mismo producto.** Entre La Rebaja y Locatel se usó el código de barras (EAN), que no deja dudas. Farmatodo no publica el EAN en su listado, y allí la equivalencia se basa en la marca, el producto y la medida que indica el nombre, que es una decisión razonada pero menos segura. Además, el campo de medida que publican los sitios no siempre es el contenido real (en Locatel, una venda de «1x5 yardas» figuraba con 17 g), por lo que el contenido de los ocho productos se verificó con el nombre.
+- **Cobertura.** En La Rebaja y Locatel se comprobó que se obtuvieron todos los productos de la sección, porque el propio sitio informa cuántos tiene. Farmatodo no informa un total; allí se da por completa la sección cuando el botón «Cargar más» desaparece y el número de productos deja de crecer. Locatel no tiene una subcategoría de antisépticos dentro de su sección de heridas, así que esa familia queda poco representada en su oferta. Las exclusiones (ostomías, guantes, jeringas, etc.) siguen reglas explícitas que pueden discutirse.
+- **Datos que faltan en Farmatodo.** Su listado solo muestra nombre, marca y precio; la descripción y la ficha técnica están en la página de cada producto, que no se recorrió, mientras que La Rebaja y Locatel sí las entregan. Además, allí una promoción se detecta cuando la tarjeta del producto muestra dos precios, y esa regla no se pudo contrastar con una oferta real.
+- **Presentaciones de distinto tamaño.** Los ocho productos son presentaciones idénticas en los tres comercios, así que el precio por unidad (pregunta 5) coincide con el ranking por precio. No se compararon tamaños distintos del mismo producto, y por eso este informe no concluye cuándo conviene comprar un tamaño más grande.
+- **Pocas fechas.** Hay dos ejecuciones (7 y 9 de octubre de 2026). Permiten ver si los precios cambiaron, pero no alcanzan para hablar de tendencias ni de la frecuencia con que los comercios cambian sus precios.
+- **Copias crudas.** Las copias guardadas en `raw/` reproducen contenido de los sitios, incluidas descripciones de producto. Ver la sección «Cumplimiento» sobre su uso y su difusión.
+- **Prueba en otro entorno.** El código se probó también en Google Colab. Allí el modo sin conexión y la extracción en línea de La Rebaja (167 productos declarados por el sitio) y de Locatel (339) funcionaron. Farmatodo no se pudo ejecutar en Colab porque necesita un navegador automatizado (el paquete `chromote`) que no estaba instalado en ese entorno; ese paquete ya se incluyó entre las dependencias de `scraper.R`.
 
-Además, las ejecuciones coincidieron con campañas comerciales publicadas por los propios comercios: Locatel anuncia en su página de políticas comerciales «Descuentos 1Q» (1 al 15 de octubre de 2026), «Cuidado Personal» (8 al 10) y «Segunda unidad con el 50 %» (9 y 10), y aclara que sus descuentos se aplican sobre el precio máximo de venta al público. Las diferencias de precio entre las ejecuciones del 07 y el 09 de octubre pueden deberse a esas campañas y no a cambios del precio regular.
-
-- **Correspondencia de productos.** Con EAN se verificó el mismo producto entre La Rebaja y Locatel, pero Farmatodo no publica EAN en el listado, y la equivalencia con ese comercio se basa en marca, producto y contenido.
-- **Contenido.** El campo de medida del sitio no siempre es el contenido real (en Locatel, una venda de "1x5 yardas" figuraba con 17 g), así que el contenido de los comparables se verificó a mano contra el nombre.
-- **Cobertura.** Locatel no tiene una subcategoría de antisépticos dentro de su sección de heridas, por lo que su oferta de esa familia queda subrepresentada. Las exclusiones (por ejemplo ostomías, guantes y jeringas) siguen reglas explícitas, que pueden discutirse.
-- **Descripción en Farmatodo.** El listado de Farmatodo solo muestra nombre, marca y precio; la descripción y la ficha técnica están en la página de cada producto, que no se recorrió. La Rebaja y Locatel sí entregan la descripción en el servicio. La proporción de anuncios con descripción (pregunta 8) lo refleja.
-- **Presentaciones de distinto tamaño.** Los ocho productos comparables son presentaciones idénticas en los tres comercios, de modo que el precio por unidad (pregunta 5) coincide con el ranking por precio. No se compararon tamaños distintos del mismo producto, y por eso este informe no concluye cuándo una presentación grande resulta más barata por unidad.
-- **Entorno de ejecución.** El código se probó en el computador del autor; no se ha probado desde otro entorno (Google Colab o GitHub Actions), que el enunciado sugiere.
-- **Ejecuciones.** Con una sola fecha no se pueden medir cambios de precio; con dos o más, el gráfico de evolución los muestra.
 
 ```{r cierre}
 #| include: false
