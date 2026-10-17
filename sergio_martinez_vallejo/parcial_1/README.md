@@ -1,7 +1,7 @@
 # Taller 1 — Comparador de precios: papel y desechables
 
 Minería de Datos (2016325) · Universidad Nacional de Colombia
-Autor/a: [COMPLETAR]
+Autor/a: Sergio Martínez Vallejo
 
 Comparador de precios de la categoría **papel y desechables** (papel higiénico, pañuelos, servilletas, toallas de cocina, y vasos, platos y cubiertos desechables) en tres supermercados con venta en línea en Colombia: **Éxito**, **Carulla** y **Olímpica**. Los datos se recolectan con *web scraping*, se almacenan en SQLite y se analizan con consultas SQL y gráficos.
 
