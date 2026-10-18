@@ -1,0 +1,165 @@
+---
+title: "Practica de Web Scrapping 1"
+format: html
+editor: visual
+---
+
+## Ejercicio
+
+```{r, pquetes, warning=FALSE, message=FALSE}
+paquetes <- c("httr",
+  "rvest", "xml2", "dplyr", "stringr",  "purrr", "janitor", "readr", "knitr"
+)
+# Verificamos qué paquetes faltan. La instalación se hace por fuera de la
+# compilación para evitar cambios inesperados en el entorno del estudiante.
+instalados <- rownames(installed.packages())
+pendientes <- setdiff(paquetes, instalados)
+
+if (length(pendientes) > 0) {
+  stop(
+    "Faltan paquetes: ", paste(pendientes, collapse = ", "),
+    ". Instálelos con install.packages(c(",
+    paste(sprintf('"%s"', pendientes), collapse = ", "), "))"
+  )
+}
+
+# Cargamos los paquetes sin mostrar mensajes
+invisible(lapply(paquetes, library, character.only = TRUE))
+```
+
+Haciendo con una sola pagina
+
+```{r, warning=FALSE}
+# condiciones de busqueda
+meses <- c("february")
+años <- 2025
+
+# creacion de varias paginas
+urls_clima <- paste0(
+  "https://www.accuweather.com/es/co/bogota/107487/",
+  meses,
+  "-weather/107487?year=",
+  años,
+  ".html"
+)
+urls_clima
+
+# ojo esta funcion solo sirve de una url
+respuesta <- GET(
+    urls_clima,
+    add_headers(
+      `User-Agent` = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      `Accept-Language` = "es-ES,es;q=0.9,en;q=0.8",
+      `Accept` = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+    )
+  )
+  print(status_code(respuesta))
+
+  if(status_code(respuesta) == 200) {
+    pagina <- read_html(content(respuesta, "text", encoding = "UTF-8"))
+    print("Conexión exitosa")
+  } else {
+    print("no conexion")
+  }
+
+# una opcion es buscando los posibles selectores, uno a uno
+html_elements(pagina, "div")
+html_elements(pagina, "div.two-column-page-content")
+html_elements(pagina, "div.page-column-1")
+html_elements(pagina, "div.page-content.content-module")
+html_elements(pagina, "div.monthly-component")
+
+# encontrar el selector de una pagina (click derecho - inspeccionar - )
+# seleccionando me muestra los elements que debo seleccionar
+## esta es la tabla general
+nodos <- pagina %>% html_elements("div.page-content.content-module")
+class(nodos)
+
+## esta el año
+año <- nodos %>% html_elements("div.map-dropdown-toggle h2") %>% html_text2() 
+
+## al seleccionar JS patch sale:
+# document.querySelector("body > div > div.two-column-page-content > div.page-column-1 > div.page-content.content-module > div.monthly-component > div > div.monthly-calendar > a:nth-child(13) > div.monthly-panel-top > div")
+dia <- nodos %>% html_elements("div.monthly-component a div.monthly-panel-top div") %>%
+      html_text2()
+
+# document.querySelector("body > div > div.two-column-page-content > div.page-column-1 > div.page-content.content-module > div.monthly-component > div > div.monthly-calendar > a:nth-child(13) > div.temp > div.low")
+min <- nodos %>% html_elements("div.monthly-component a div.temp div.low") %>%
+      html_text2()
+max <- nodos %>% html_elements("div.monthly-component a div.temp div.high") %>%
+      html_text2()
+
+
+library(lubridate)
+tabla_mes <- tibble(
+  fecha = as.Date(parse_date_time(paste(año[2], año[1], dia[cumsum(dia == "1") == 1]),, orders = "Y-B-d")), # ,locale = "es_ES"
+  high =  as.numeric(max[cumsum(dia == "1") == 1] %>% str_replace_all("[°]", "")) ,
+  low = as.numeric(min[cumsum(dia == "1") == 1] %>% str_replace_all("[°]", "")) 
+  )%>% filter(fecha <= Sys.Date())
+
+tabla_mes
+```
+
+ahora si creando la funcion
+
+```{r, warning=FALSE}
+# condiciones de busqueda
+meses <- c(
+"january" , "february" , "march", "april", "may", "june", "july", "august", 
+"september", "october", "november", "december"
+)
+años <- 2025:2026
+
+# creacion de varias paginas
+urls_clima <- paste0(
+  "https://www.accuweather.com/es/co/bogota/107487/",
+  meses,
+  "-weather/107487?year=",
+  años,
+  ".html"
+)
+urls_clima
+
+scrapear_clima <- function(url) {
+  Sys.sleep(7)
+  print(paste0("conectado a:",url))
+  respuesta <- GET(
+    url,
+    add_headers(
+      `User-Agent` = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      `Accept-Language` = "es-ES,es;q=0.9,en;q=0.8",
+      `Accept` = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" 
+    )
+  )
+  print(status_code(respuesta))
+  if(status_code(respuesta) == 200) {
+    pagina <- read_html(content(respuesta, "text", encoding = "UTF-8"))
+    print("Conexión exitosa")
+  } else {
+    print("no conexion")
+  }
+  nodos <- pagina %>% html_elements("div.page-content.content-module")
+  
+  map_dfr(nodos, function(nodo,tabla_mes) {
+  año <- nodo %>% html_elements("div.map-dropdown-toggle h2") %>% html_text2() 
+  dia <- nodo %>% html_elements("div.monthly-component a div.monthly-panel-top div") %>%
+    html_text2()
+  min <- nodo %>% html_elements("div.monthly-component a div.temp div.low") %>%
+    html_text2()
+  max <- nodo %>% html_elements("div.monthly-component a div.temp div.high") %>%
+    html_text2()
+  
+  tabla_mes <- tibble(
+    fecha = as.Date(parse_date_time(paste(año[2], año[1], dia[cumsum(dia == "1") == 1]),, orders = "Y-B-d")),#,locale = "es_ES"
+    high =  as.numeric(max[cumsum(dia == "1") == 1] %>% str_replace_all("[°]", "")) ,
+    low = as.numeric(min[cumsum(dia == "1") == 1] %>% str_replace_all("[°]", "")) 
+  )%>%
+    filter(fecha <= Sys.Date())
+  
+  write_csv(tabla_mes, "base_clima_bogota.csv", append = TRUE)
+  return(tabla_mes)}
+  )
+}
+
+datos_clima_final <- map_dfr(urls_clima, scrapear_clima) 
+```
