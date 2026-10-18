@@ -12,7 +12,7 @@ params:
   reconstruir_base: true    # true = reconstruye processed/precios.sqlite antes de analizar
 ---
 
-Por medio del presente se realiza una recoleccion de datos mediante web scraping en comercios y farmacias con venta en línea en Colombia. Este análisis permite identificar dónde resulta más económico comprar algunos productos de esta categoria de artiuclos de cuidado personal. Se presentan tres establecimientos de comercio reconocidos y se encuentra el menor precio por unidad de contenido, en alguna de las presentaciones.
+Por medio del presente se realiza una recoleccion de datos mediante web scraping en comercios y farmacias con venta en línea en Colombia. Este análisis permite identificar dónde resulta más económico comprar algunos productos de esta categoria de artiuclos de cuidado personal. Se presentan tres establecimientos de comercio reconocidos y se encuentra el menor precio por unidad de contenido, en alguna de las presentaciones
 
 ## Introducción
 
