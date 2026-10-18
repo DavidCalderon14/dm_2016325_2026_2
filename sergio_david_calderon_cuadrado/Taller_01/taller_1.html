@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Sergio David Calderón Cuadrado">
+
+<title>Comparador de precios</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="taller_1_files/libs/clipboard/clipboard.min.js"></script>
+<script src="taller_1_files/libs/quarto-html/quarto.js"></script>
+<script src="taller_1_files/libs/quarto-html/popper.min.js"></script>
+<script src="taller_1_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="taller_1_files/libs/quarto-html/anchor.min.js"></script>
+<link href="taller_1_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="taller_1_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="taller_1_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="taller_1_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="taller_1_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Comparador de precios</h1>
+<p class="subtitle lead">para productos de Cuidado corporal</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Sergio David Calderón Cuadrado </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Por medio del presente se realiza una recoleccion de datos mediante web scraping en comercios y farmacias con venta en línea en Colombia. Este análisis permite identificar dónde resulta más económico comprar algunos productos de esta categoria de artiuclos de cuidado personal. Se presentan tres establecimientos de comercio reconocidos y se encuentra el menor precio por unidad de contenido, en alguna de las presentaciones.</p>
+<section id="introducción" class="level2">
+<h2 class="anchored" data-anchor-id="introducción">Introducción</h2>
+<p><strong>categoría:</strong> Cuidado corporal</p>
+<p>productos seleccionados:</p>
+<ul>
+<li>cremas hidratantes corporales</li>
+<li>aceite corporal</li>
+<li>exfoliante</li>
+<li>productos cosméticos para estrías = producto cosméticos para estría</li>
+</ul>
+<p><strong>Nota:</strong> Excluye productos específicos para manos, pies y bebés. <strong>Aclaracion:</strong> se colocan palabras en singular</p>
+<p>objetivo de comparación:</p>
+</section>
+<section id="fuentes-y-documenteacion-de-especificaciones-de-cada-comercio" class="level2">
+<h2 class="anchored" data-anchor-id="fuentes-y-documenteacion-de-especificaciones-de-cada-comercio">Fuentes y documenteacion de especificaciones de cada comercio</h2>
+<p>se seleccionaron tres comercios con venta en línea en Colombia que ofrecen estos productos de la categoría seleccionada</p>
+<p>se detallada la seleccion y caracterizacion de la busqueda por medios de criterios segun lo correspondiente a la estructura de cada pagina y de la distribucion en la pagina web particular de sus productos. Se ordena y especifica segun cada comercio como sigue:</p>
+<section id="larebaja" class="level3">
+<h3 class="anchored" data-anchor-id="larebaja">LaRebaja</h3>
+<p>pagina general: <a href="https://www.larebajavirtual.com/crema%20hidratente%20corporal?_q=crema%20hidratente%20corporal&amp;fuzzy=0&amp;initialMap=ft&amp;initialQuery=crema%20hidratente%20corporal&amp;map=category-2,ft&amp;operator=and&amp;query=/cuidado-corporal/crema%20hidratente%20corporal&amp;searchState">link</a></p>
+<section id="organizacion-de-sus-categorías-segun-busqueda" class="level4">
+<h4 class="anchored" data-anchor-id="organizacion-de-sus-categorías-segun-busqueda">organizacion de sus categorías segun busqueda</h4>
+<p>Busqueda: <strong><em>crema hidrante corporal</em></strong></p>
+<p>pagina: <a href="https://www.larebajavirtual.com/crema%20hidrante%20corporal?_q=crema%20hidrante%20corporal&amp;fuzzy=0&amp;initialMap=ft&amp;initialQuery=crema%20hidrante%20corporal&amp;map=category-2,ft&amp;operator=and&amp;query=/cuidado-corporal/crema%20hidrante%20corporal&amp;searchState">link</a></p>
+<p>filtro de categoria: <strong>cuidado corporal</strong></p>
+<p>observaciones: se expluye la categoria “corporal” porque trae productos para manos, arrugas y otros fuera de la categoria seleccionada. gel hidratante, si dice solo crema y no corporal se descarta, que no corresponde a la categoria seleccionada.</p>
+<p>Busqueda: <strong><em>aceite corporal</em></strong></p>
+<p>pagina principal: <a href="https://www.larebajavirtual.com/aceite%20corporal?_q=aceite%20corporal&amp;map=ft">link</a></p>
+<p>pagina: <a href="https://www.larebajavirtual.com/aceite%20corporal?_q=aceite%20corporal&amp;fuzzy=0&amp;initialMap=ft&amp;initialQuery=aceite%20corporal&amp;map=category-2,ft&amp;operator=and&amp;query=/cuidado-corporal/aceite%20corporal&amp;searchState">link</a></p>
+<p>filtro de categoria: <strong>cuidado corporal</strong></p>
+<p>observaciones: se descarta la categoria “corporal” porque trae aceite para ducha y pomadas, que se salen de la categoria seleccionada</p>
+<p>Busqueda: <strong><em>exfoliante</em></strong></p>
+<p>pagina: <a href="https://www.larebajavirtual.com/exfoliante?_q=exfoliante&amp;fuzzy=0&amp;initialMap=ft&amp;initialQuery=exfoliante&amp;map=category-2,ft&amp;operator=and&amp;query=/cuidado-corporal/exfoliante&amp;searchState">link</a></p>
+<p>filtro de categoria: <strong>cuidado corporal</strong></p>
+<p>observaciones: no se toma en general porque trae productos que se salen de la categoria seleccionada.</p>
+<p>Busqueda: <strong><em>estrías</em></strong></p>
+<p>pagina: <a href="https://www.larebajavirtual.com/estr%C3%ADas?_q=estr%C3%ADas&amp;map=ft">link</a></p>
+<p>observaciones: se deja sin categoria dado que la estrias se presentan tanto en la parte facial como en la corporal, no hay distincion de clases</p>
+</section>
+</section>
+<section id="farmatodo" class="level3">
+<h3 class="anchored" data-anchor-id="farmatodo">Farmatodo</h3>
+<p>pagina principial: <a href="https://www.farmatodo.com.co/buscar?product=Crema%20corporal&amp;departamento=Todos&amp;filtros=">link</a></p>
+<section id="organizacion-de-sus-categorías-segun-busqueda-1" class="level4">
+<h4 class="anchored" data-anchor-id="organizacion-de-sus-categorías-segun-busqueda-1">organizacion de sus categorías segun busqueda</h4>
+<p>Busqueda: <strong><em>crema hidrante corporal</em></strong></p>
+<p>pagina: <a href="https://www.farmatodo.com.co/buscar?product=crema%20hidratante%20corporal&amp;departamento=Todos&amp;filtros=%20AND%20%20categorie:%27Corporal%27%20AND%20fullPrice%20%3E%3D%2014950%20AND%20fullPrice%20%3C%3D%20256700">link</a></p>
+<p>filtro de categoria: <strong>corporal</strong></p>
+<p>pagina: <a href="https://www.farmatodo.com.co/buscar?product=crema%20hidratante%20corporal&amp;departamento=Todos&amp;filtros=%20AND%20%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2014950%20AND%20fullPrice%20%3C%3D%20256700">link</a></p>
+<p>filtro de subcategoria: <strong>cuidado corporal</strong> pero se deben descartar resultados como: - gel hidratante, si dice solo crema y no corporal se descarta, que no corresponde a la categoria seleccionada.</p>
+<p>observaciones: se quitan duplicados dado que se hace busquedas separadas y por ende pueden haber coincidencias de busqueda en ambos filtros de busqueda</p>
+<p>Busqueda: <strong><em>aceite corporal</em></strong></p>
+<p><a href="https://www.farmatodo.com.co/buscar?product=aceite%20corporal&amp;departamento=Todos&amp;filtros=%20AND%20%20categorie:%27Corporal%27%20AND%20fullPrice%20%3E%3D%2023900%20AND%20fullPrice%20%3C%3D%20244990">link</a></p>
+<p>considera pertinente es: filtro de categoria: <strong>corporal</strong></p>
+<p><a href="https://www.farmatodo.com.co/buscar?product=aceite%20corporal&amp;departamento=Todos&amp;filtros=%20AND%20%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2023900%20AND%20fullPrice%20%3C%3D%20244990">link</a></p>
+<p>filtro de subcategoria: <strong>cuidado corporal</strong> pero se deben descartar resultados como: locion corporal, gel hidratante, crema de sol, que no corresponde a la categoria seleccionada.</p>
+<p>se quitan duplicados dado que se hace busquedas separadas y por ende pueden haber coincidencias de busqueda en ambos filtros de busqueda</p>
+<p>Busqueda: <strong><em>exfoliante</em></strong></p>
+<p><a href="https://www.farmatodo.com.co/buscar?product=exfoliante&amp;departamento=Todos&amp;filtros=%20AND%20%20categorie:%27Corporal%27%20OR%20categorie:%27Cuidado%20de%20la%20piel%27%20AND%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2011000%20AND%20fullPrice%20%3C%3D%20350900">link</a></p>
+<p>considera pertinente es: filtro de categoria: <strong>corporal y cuidado de la piel</strong> y subcategoria: <strong>cuidado corporal</strong> con ambos filtros encuentra los productos correspondoentes a ambos bien definidos</p>
+<p>Busqueda: : <strong><em>estrías</em></strong></p>
+<p><a href="https://www.farmatodo.com.co/buscar?product=estr%C3%ADas&amp;departamento=Todos&amp;filtros=%20AND%20%20categorie:%27Corporal%27%20AND%20fullPrice%20%3E%3D%2054900%20AND%20fullPrice%20%3C%3D%20299900">link</a></p>
+<p>considera pertinente es: filtro de categoria: <strong>corporal</strong></p>
+<p><a href="https://www.farmatodo.com.co/buscar?product=estr%C3%ADas&amp;departamento=Todos&amp;filtros=%20AND%20%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2054900%20AND%20fullPrice%20%3C%3D%20299900">link</a></p>
+<p>filtro de subcategoria: <strong>cuidado corporal</strong> pero se deben descartar resultados como: locion corporal, gel hidratante, crema de sol, que no corresponde a la categoria seleccionada.</p>
+<p><a href="https://www.farmatodo.com.co/buscar?product=estr%C3%ADas&amp;departamento=Todos&amp;filtros=%20AND%20%20subCategory:%27Aceites%20corporales%27%20AND%20fullPrice%20%3E%3D%2054900%20AND%20fullPrice%20%3C%3D%20299900">link</a></p>
+<p>filtro de subcategoria: <strong>aceites corporales</strong> pero se deben descartar resultados como: locion corporal, gel hidratante, crema de sol, que no corresponde a la categoria seleccionada.</p>
+<p>se quitan duplicados dado que se hace busquedas separadas y por ende pueden haber coincidencias de busqueda en ambos filtros de busqueda</p>
+</section>
+</section>
+<section id="exito" class="level3">
+<h3 class="anchored" data-anchor-id="exito">EXITO</h3>
+<p>pagina: <a href="https://www.exito.com/s?q=crema+hidratante+corporal&amp;category-2=cuidado-corporal&amp;category-1=cuidado-personal&amp;category-3=cremas-de-manos-y-cuerpo&amp;category-1=cuidado-personal&amp;facets=category-2%2Ccategory-1%2Ccategory-3&amp;sort=score_desc&amp;page=0">link</a></p>
+<section id="organizacion-de-sus-categorías-segun-busqueda-2" class="level4">
+<h4 class="anchored" data-anchor-id="organizacion-de-sus-categorías-segun-busqueda-2">organizacion de sus categorías segun busqueda</h4>
+<p>Busqueda: <strong><em>crema hidrante corporal</em></strong></p>
+<p>filtro: - departamento: <strong>cuidado corporal</strong> - categoria: <strong>cuidado corporal</strong> - subcategoria: <strong>crema de manos y cuerpo</strong></p>
+<p>observaciones: dado que este almacen incorpora en estas clasificaciones pero se descartan los productos de manos y lo que no digan corporal, tambien se eliminar productos relacionados con bebes (baby) y que sean para manos.</p>
+<p>Busqueda: <strong><em>aceite corporal</em></strong></p>
+<p>pagina: <a href="https://www.exito.com/s?q=aceite+corporal&amp;category-1=cuidado-personal&amp;category-2=cuidado-corporal&amp;category-3=aceites-corporales&amp;facets=category-1%2Ccategory-2%2Ccategory-3&amp;sort=score_desc&amp;page=0">link</a></p>
+<p>filtro: - departamento: <strong>cuidado personal</strong> - categoria: <strong>cuidado corporal</strong> - subcategoria: <strong>aceites corporales</strong></p>
+<p>observaciones: dado que este almacen incorpora en estas clasificaciones pero se descartan los productos de manos y lo que no digan corporal, tambien se eliminar productos relacionados con bebes (baby) y que sean para manos.</p>
+<p>Busqueda: <strong><em>exfoliante</em></strong></p>
+<p>pagina: <a href="https://www.exito.com/s?q=exfoliante&amp;category-1=cuidado-personal&amp;category-2=cuidado-corporal&amp;category-3=cremas-de-manos-y-cuerpo&amp;facets=category-1%2Ccategory-2%2Ccategory-3&amp;sort=score_desc&amp;page=0">link</a></p>
+<p>filtro: - departamento: <strong>cuidado corporal</strong> - categoria: <strong>cuidado corporal</strong> - subcategoria: <strong>crema de manos y cuerpo</strong></p>
+<p>observaciones: se toman estas categorias porque este almacen tiene en cuenta los productos de cuidado corporal y discrimados que no son maquinas ni instrumentos relacionados con exfoliante. Se dejan unicamente crema y se descartan las que tengan que ver con manos o que no digan corporal.</p>
+<p>Busqueda: <strong><em>estrías</em></strong></p>
+<p>pagina:</p>
+<p>filtro: - departamento: <strong>cuidado corporal</strong> - categoria: <strong>cuidado corporal</strong> - subcategoria: <strong>crema de manos y cuerpo</strong> y <strong>aceites corporales</strong></p>
+<p>observaciones: se toman todos con esos filtros. como son productos cosmeticos no se quitan los otros como cremas y aceitas que aparecen, como mantequillas y para masajes para estrias que no aparece en otros almacenes.</p>
+</section>
+</section>
+</section>
+<section id="scrapping" class="level2">
+<h2 class="anchored" data-anchor-id="scrapping">Scrapping</h2>
+<p>La recoleccón de los datos de las paginas principales se recolectan por medio del metodo web-scrapping, un tipo de recoleccion masivo y eficiente de extraccion de datos por medio del software R. Para mayor detalle revisar codigo <code>scraper_general_1.R</code></p>
+<section id="recoleccion-completa-de-los-productos-de-la-categoria-correspondiente" class="level3">
+<h3 class="anchored" data-anchor-id="recoleccion-completa-de-los-productos-de-la-categoria-correspondiente">Recoleccion completa de los productos de la categoria correspondiente</h3>
+<p>En cada comercio se extrae todos los productos listados en la categoría, no solo los que se usan para la comparación sino los resultantes de la busqueda de los prodcutos de esta categoria. Esto se hace recorriendo la paginación, el desplazamiento o los filtros necesarios mencionados anteriormente para asegurar la especificacion y la extraccion de los productos que pertenecen a la categoria segun las especificaciones del sitio web de los comercios.</p>
+<p>para ello se considera se considera en una sola corrida la extraccion conjunta y en linea de los tres comercios.</p>
+<p>despues de la extraccion se hace una validacion del contenido y integridad de los datos extraidos, se corrobora la cantidad de datos pertenencientes a la pagina y los contenidos en las bases de datos construidas.</p>
+<p>tambien se detallan algunas consideraciones practicas que se deben tener en cuenta de los datos extraidos y para la transformacion y manipulacion de los datos, despues de una limpieza exhaustiva de los campos y tipos de variable.</p>
+</section>
+</section>
+<section id="selección-de-los-productos-comparables" class="level2">
+<h2 class="anchored" data-anchor-id="selección-de-los-productos-comparables">Selección de los productos comparables</h2>
+<p>para encontrar los productos que se van a comparar se realiza la busqueda manual en cada uno de los comercios y se comparan y verifican que los productos presentacion esten presente en los sitios wed de los comercios y se seleccionan los siguientes productos que corresponden a la categoria de productos de cuidado personal. Estos productos provienen de la misma extracción de la categoría y no se hacen búsquedas manuales adicionales.</p>
+<section id="productos-para-comparar" class="level4">
+<h4 class="anchored" data-anchor-id="productos-para-comparar">Productos para comparar:</h4>
+<ul>
+<li><ol type="1">
+<li>LUBRIDERM humectación diaria (200 ml)</li>
+</ol></li>
+<li><ol start="2" type="1">
+<li>LUBRIDERM humectación diaria (400 ml)</li>
+</ol></li>
+<li><ol start="3" type="1">
+<li>LUBRIDERM humectación diaria (946 ml)</li>
+</ol></li>
+<li><ol start="4" type="1">
+<li>LUBRIDERM humectación delicada (400ml)</li>
+</ol></li>
+<li><ol start="5" type="1">
+<li>LUBRIDERM intensiva reparación (946 ml)</li>
+</ol></li>
+<li><ol start="6" type="1">
+<li>LUBRIDERM diaria (120 ml)</li>
+</ol></li>
+<li><ol start="7" type="1">
+<li>LUBRIDERM 15 fps (200 ml)</li>
+</ol></li>
+<li><ol start="8" type="1">
+<li>LUBRIDERM 15 fps (400 ml)</li>
+</ol></li>
+<li><ol start="9" type="1">
+<li>NIVEA hidratacion (1000 ml)</li>
+</ol></li>
+</ul>
+<p>a estos ṕroductos identificados se procede a hacer la verificacion en la base de productos de cada comercio y se identifican los productos comparables en la base mediante un indicador de pertenencia al comparativo (columna es_comparable) y un identificador de producto para relacion entre los comercios con los mismos codigos de identificacion dados en la lista anterior (por ejemplo, id_producto = 1, para la crema corporal LUBRIDERM humectación diaria (200 ml) en los tres comercios seleccionados y asi sucesivamente)</p>
+<p>la extraccion permite realizar una obtener el ultimo precio registrado en la pagina, de donde se tiene como informacion comun para todos los comercios las URLs, fecha y hora de captura, para dar trazabilidad de los precios y de la posible actualiazcion. Tambien como registro de consulta y de extraccion.</p>
+</section>
+</section>
+<section id="preparación" class="level2">
+<h2 class="anchored" data-anchor-id="preparación">Preparación</h2>
+<p>el anterior scrapper permite internamiente realizar de manera alterna, una limpieza y normalizacion de los campos y variables recolectadas, por ejemplo, los precios se consideran en unidades de medida de pesos COP y se armonizan las diferentes unidades de medida para los productos encontrados en los tres comercios seleccionados.</p>
+</section>
+<section id="base-sqlite" class="level2">
+<h2 class="anchored" data-anchor-id="base-sqlite">Base SQLite</h2>
+<p>luego procedemos a crear la base SQLite para el tratamiento y consulta de los datos por medio de tablas y vistas desde un formato de datos SQL. En el codigo <code>sqlite_scraper.R</code> se detalla el tratamiento de este tipo de estructura de base de datos, la creacion de tablas y las relaciones necesarias por medio de llaves principales y foraneas que permiten integrar y obtener una base de datos confiable y integra.</p>
+<p>despues de tener la base en un sistema de datos SQL, se procede a la creacion de tablas y sus relaciones como integracion de sistema de datos de forma segura y completa.</p>
+<p>luego se obtienen las tablas (ya relacionadas) mas relevantes para hacer consultas</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "anuncios"           "comercios"          "ejecuciones"       
+[4] "observaciones"      "productos"          "v_observaciones"   
+[7] "v_variacion_precio"</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "id_observacion"         "comercio"               "id_producto"           
+ [4] "producto"               "linea"                  "es_comparable"         
+ [7] "sku"                    "nombre_original"        "marca_std"             
+[10] "subcategoria_std"       "medida"                 "cantidad_unidad"       
+[13] "unidades"               "cantidad_total"         "precio_cop"            
+[16] "precio_lista_cop"       "es_promocion"           "precio_por_medida"     
+[19] "fecha_hora_consulta"    "codigo_corrida"         "estado_ejecucion"      
+[22] "url_extraccion"         "url_producto"           "texto_original_anuncio"</code></pre>
+</div>
+</div>
+<p>observamos como estan los datos en la una de las tablas, por ejemplo en las observaciones.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  id_observacion comercio id_producto                              producto
+1              1    Éxito           5 Lubriderm reparación intensiva 946 ml
+2              2    Éxito          NA                                  &lt;NA&gt;
+3              3    Éxito           3   Lubriderm humectación diaria 946 ml
+4              4    Éxito          NA                                  &lt;NA&gt;
+5              5    Éxito          NA                                  &lt;NA&gt;
+6              6    Éxito          NA                                  &lt;NA&gt;
+                           linea es_comparable       sku
+1 Lubriderm reparación intensiva             1    869499
+2                           &lt;NA&gt;             0 104586664
+3   Lubriderm humectación diaria             1   3155353
+4                           &lt;NA&gt;             0    878339
+5                           &lt;NA&gt;             0    754586
+6                           &lt;NA&gt;             0   3244787
+                                            nombre_original marca_std
+1    Crema corporal LUBRIDERM reparación intensiva (946 gr) LUBRIDERM
+2           Hidratante Corporal Cerave Cara Y Cuerpo 562 Ml      &lt;NA&gt;
+3      Crema corporal LUBRIDERM humectación diaria (946 ml) LUBRIDERM
+4 Crema corporal LUBRIDERM protección solar FPS 15 (946 gr) LUBRIDERM
+5                 Crema corporal LUBRIDERM for men (400 ml) LUBRIDERM
+6                 Crema corporal NIVEA hidratante (1000 ml)     NIVEA
+  subcategoria_std medida cantidad_unidad unidades cantidad_total precio_cop
+1   crema_corporal      g             946        1            946      44070
+2   crema_corporal     ml             562        1            562     134462
+3   crema_corporal     ml             946        1            946      46800
+4   crema_corporal      g             946        1            946      49140
+5   crema_corporal     ml             400        1            400      50300
+6   crema_corporal     ml            1000        1           1000      49910
+  precio_lista_cop es_promocion precio_por_medida       fecha_hora_consulta
+1            67800            1             46.59 2026-10-17T23:01:48-05:00
+2           235309            1            239.26 2026-10-17T23:01:48-05:00
+3            72000            1             49.47 2026-10-17T23:01:48-05:00
+4            81000            1             51.95 2026-10-17T23:01:48-05:00
+5            50300            0            125.75 2026-10-17T23:01:48-05:00
+6            71300            1             49.91 2026-10-17T23:01:48-05:00
+  codigo_corrida estado_ejecucion
+1 20261017230148          parcial
+2 20261017230148          parcial
+3 20261017230148          parcial
+4 20261017230148          parcial
+5 20261017230148          parcial
+6 20261017230148          parcial
+                                                                          url_extraccion
+1                          https://www.exito.com/cr-corporal-reparacion-intensi-869499/p
+2   https://www.exito.com/hidratante-corporal-cerave-cara-y-cuerpo-562-ml-104586664-mp/p
+3     https://www.exito.com/crema-corporal-humectacion-diaria-lubriderm-946-ml-3155353/p
+4                                     https://www.exito.com/crema-corporal-uv15-878339/p
+5                              https://www.exito.com/crema-men-fragancia-ligera-754586/p
+6 https://www.exito.com/nbody-ess-pmp-rprcrltn-1000ml-nivea-hidratante-1000-ml-3244787/p
+                                                                            url_producto
+1                          https://www.exito.com/cr-corporal-reparacion-intensi-869499/p
+2   https://www.exito.com/hidratante-corporal-cerave-cara-y-cuerpo-562-ml-104586664-mp/p
+3     https://www.exito.com/crema-corporal-humectacion-diaria-lubriderm-946-ml-3155353/p
+4                                     https://www.exito.com/crema-corporal-uv15-878339/p
+5                              https://www.exito.com/crema-men-fragancia-ligera-754586/p
+6 https://www.exito.com/nbody-ess-pmp-rprcrltn-1000ml-nivea-hidratante-1000-ml-3244787/p
+                                                                                                                                                                            texto_original_anuncio
+1 Crema corporal LUBRIDERM reparación intensiva (946 gr)\n\n(Gr a $ 46,59)\n\n-\n\n35\n\n%\n\n$ 67.800\n\n$ 44.070\n\nVendido por: Exito\n\n4.7(27 opiniones)\n\nVer 1 oferta adicional\n\nAgregar
+2                                 Hidratante Corporal Cerave Cara Y Cuerpo 562 Ml\n\n-\n\n42\n\n%\n\n$ 235.309\n\n$ 134.462\n\nVendido por: Magic marketplace\n\nVer 1 oferta adicional\n\nAgregar
+3                              Crema corporal LUBRIDERM humectación diaria (946 ml)\n\n(Ml a $ 49,47)\n\n-\n\n35\n\n%\n\n$ 72.000\n\n$ 46.800\n\nVendido por: Exito\n\n5.0(6 opiniones)\n\nAgregar
+4                         Crema corporal LUBRIDERM protección solar FPS 15 (946 gr)\n\n(Gr a $ 51,95)\n\n-\n\n39\n\n%\n\n$ 81.000\n\n$ 49.140\n\nVendido por: Exito\n\n5.0(2 opiniones)\n\nAgregar
+5                                                                    Crema corporal LUBRIDERM for men (400 ml)\n\n(Ml a $ 125,75)\n\n$ 50.300\n\nVendido por: Exito\n\n5.0(1 opiniones)\n\nAgregar
+6                                                             Crema corporal NIVEA hidratante (1000 ml)\n\n(Ml a $ 49,91)\n\n-\n\n30\n\n%\n\n$ 71.300\n\n$ 49.910\n\nVendido por: Exito\n\nAgregar</code></pre>
+</div>
+</div>
+<p>columnas de algunas tablas de interes</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "id_comercio" "codigo"      "nombre"      "sitio_web"  </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "id_anuncio"            "id_comercio"           "sku"                  
+ [4] "id_producto"           "nombre_original"       "presentacion_original"
+ [7] "marca_original"        "marca_std"             "subcategoria_std"     
+[10] "envase"                "medida"                "cantidad_unidad"      
+[13] "unidades"              "cantidad_total"        "url_producto"         
+[16] "texto_original"        "primera_consulta"      "ultima_consulta"      </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "id_ejecucion"      "codigo_corrida"    "id_comercio"      
+[4] "fecha_hora_inicio" "n_registros"       "estado"           
+[7] "mensaje"          </code></pre>
+</div>
+</div>
+</section>
+<section id="consultas-sql" class="level2">
+<h2 class="anchored" data-anchor-id="consultas-sql">Consultas SQL</h2>
+<p>Con el proposito de comprender y dar respuesta primordial del documento, se explora y realizan algunas preguntas que permiten saber con claridad los comercios que ofrecen precios más comodos, sus ventajas entre competidores y resultados de analisis de la informacion contenida en la base. Por ejemplo podriamos preguntarnos:</p>
+<section id="section" class="level3">
+<h3 class="anchored" data-anchor-id="section">1</h3>
+<p>¿Cuántos comercios, productos/presentaciones y observaciones contiene la base? ¿Cuántos productos aporta cada comercio?</p>
+<p>Numero de productos en general</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  n_productos n_observaciones
+1         226             226</code></pre>
+</div>
+</div>
+<p>Numero de productos en cada comercio</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>   comercio n_productos
+1 Farmatodo         119
+2 La Rebaja          40
+3     Éxito          67</code></pre>
+</div>
+</div>
+<p>Numero de productos dentro de cada comercio y categoria.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>    comercio    subcategoria_std n_productos
+1  Farmatodo     aceite_corporal          19
+2  Farmatodo      crema_corporal          66
+3  Farmatodo exfoliante_corporal          29
+4  Farmatodo      otros_corporal           5
+5  La Rebaja     aceite_corporal          12
+6  La Rebaja      crema_corporal          24
+7  La Rebaja exfoliante_corporal           1
+8  La Rebaja      otros_corporal           3
+9      Éxito     aceite_corporal          18
+10     Éxito      crema_corporal          46
+11     Éxito exfoliante_corporal           2
+12     Éxito      otros_corporal           1</code></pre>
+</div>
+</div>
+<p>interpretacion: hay tres comercios, 264 productos distintos, hay 515 observaciones en total en la base. la cantidad de productos que registra cada comercio es 120 Farmatodo, 77 para LaRabaja y 67 para almacen Exito.</p>
+</section>
+<section id="section-1" class="level3">
+<h3 class="anchored" data-anchor-id="section-1">2</h3>
+<p>En una misma ejecución de recolección, ¿se obtuvieron al menos 24 observaciones comparables (ocho productos por tres comercios)? ¿Hay registros repetidos del mismo producto y comercio en esa ejecución?</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "id_observacion"         "comercio"               "id_producto"           
+ [4] "producto"               "linea"                  "es_comparable"         
+ [7] "sku"                    "nombre_original"        "marca_std"             
+[10] "subcategoria_std"       "medida"                 "cantidad_unidad"       
+[13] "unidades"               "cantidad_total"         "precio_cop"            
+[16] "precio_lista_cop"       "es_promocion"           "precio_por_medida"     
+[19] "fecha_hora_consulta"    "codigo_corrida"         "estado_ejecucion"      
+[22] "url_extraccion"         "url_producto"           "texto_original_anuncio"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "id_producto"      "nombre"           "linea"            "marca_std"       
+ [5] "subcategoria_std" "presentacion"     "medida"           "cantidad_unidad" 
+ [9] "unidades"         "cantidad_total"  </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  codigo_corrida obs_comparables productos_distintos comercios esperadas
+1 20261017230148              26                   9         3        27
+  cumple_24
+1         1</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] codigo_corrida comercio       id_producto    producto       veces         
+&lt;0 rows&gt; (or 0-length row.names)</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  codigo_corrida  comercio                                      nombre_original
+1 20261017230148 La Rebaja          CREMA CORPORAL LUBRIDERM HUMECTACION DIARIA
+2 20261017230148 La Rebaja                      CREMA CORPORAL LUBRIDERM FPS 15
+3 20261017230148 La Rebaja        CREMA CORPORAL LUBRIDERM REPARACIÓN INTENSIVA
+4 20261017230148 La Rebaja                          ACEITE CORPORAL COCO DROGAM
+5 20261017230148 La Rebaja                                       BIO-OIL ACEITE
+6 20261017230148 La Rebaja CICATRICURE GEL FACIAL CORPORAL CICATRICES Y ESTRIAS
+  veces
+1     5
+2     3
+3     3
+4     2
+5     2
+6     2</code></pre>
+</div>
+</div>
+<p>interpretacion: Si, en una misma ejecucion, por ejemplo la ultima, si se obtuvieron al menos 24 observaciones para comparar, en nuestro caso particular se tiene 27 observaciones 9 por cada comercio. No existen repetidos en el sentido que tienen el mismo producto comparable y comercio dentro de una misma ejecución pero si hay registros repetidos por nombre de producto y comercio en esa ejecución en su mayoria del comercio LaRebaja.</p>
+</section>
+<section id="section-2" class="level3">
+<h3 class="anchored" data-anchor-id="section-2">3</h3>
+<p>Para cada presentación comparable, ¿cuáles son el precio mínimo, máximo y promedio? ¿Qué comercio ofrece el menor precio? Incluir los empates.</p>
+<p>para este caso se usa la opcion ultima corrida obtenida</p>
+<p>esta se toma como referencia. Los productos comparables se muestran a continuacion</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  id_producto                              producto n_comercios precio_min
+1           1   Lubriderm humectación diaria 200 ml           3      27250
+2           2   Lubriderm humectación diaria 400 ml           3      30555
+3           3   Lubriderm humectación diaria 946 ml           3      46800
+4           4 Lubriderm humectación delicada 400 ml           3      43500
+5           5 Lubriderm reparación intensiva 946 ml           3      44070
+6           6   Lubriderm humectación diaria 120 ml           3      19600
+7           7               Lubriderm FPS 15 200 ml           3      31350
+8           8               Lubriderm FPS 15 400 ml           3      34230
+9           9     Nivea hidratación express 1000 ml           2      41700
+  precio_max precio_prom comercio_menor_precio
+1      30100       28683                 Éxito
+2      46750       41102                 Éxito
+3      71200       57867                 Éxito
+4      47100       45750                 Éxito
+5      80600       60490                 Éxito
+6      19650       19617      Éxito, La Rebaja
+7      34900       33550                 Éxito
+8      54900       46977                 Éxito
+9      55950       48825             La Rebaja</code></pre>
+</div>
+</div>
+<p>interpretacion: el comercio que ofrece el menor precio en casi en todos los productos es el almacen Exito, a excepción de dos productos, en <strong>Lubriderm humectación diaria 120 ml</strong> que tiene empate con LaRebaja y el segundo producto es <strong>Nivea hidratación express 1000 ml</strong> que obtiene un menor precio tambien LaRebaja. Algo que resaltar aqui es que el comercio Farmatodo no participa en ningun producto como de menor precio, es decir, entre estos productos seleccionados de cuidado personal el menos favorable es este.</p>
+</section>
+<section id="section-3" class="level3">
+<h3 class="anchored" data-anchor-id="section-3">4</h3>
+<p>¿Cuál es el ahorro en COP y en porcentaje al elegir la oferta más económica de cada presentación?</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  id_producto                              producto precio_min precio_max
+1           1   Lubriderm humectación diaria 200 ml      27250      30100
+2           2   Lubriderm humectación diaria 400 ml      30555      46750
+3           3   Lubriderm humectación diaria 946 ml      46800      71200
+4           4 Lubriderm humectación delicada 400 ml      43500      47100
+5           5 Lubriderm reparación intensiva 946 ml      44070      80600
+6           6   Lubriderm humectación diaria 120 ml      19600      19650
+7           7               Lubriderm FPS 15 200 ml      31350      34900
+8           8               Lubriderm FPS 15 400 ml      34230      54900
+9           9     Nivea hidratación express 1000 ml      41700      55950
+  ahorro_vs_max_cop ahorro_vs_max_pct ahorro_vs_prom_cop ahorro_vs_prom_pct
+1              2850               9.5               1433                5.0
+2             16195              34.6              10547               25.7
+3             24400              34.3              11067               19.1
+4              3600               7.6               2250                4.9
+5             36530              45.3              16420               27.1
+6                50               0.3                 17                0.1
+7              3550              10.2               2200                6.6
+8             20670              37.7              12747               27.1
+9             14250              25.5               7125               14.6</code></pre>
+</div>
+</div>
+<p>interpretacion: el ahorro con respecto al maximo valor de los productos comparables de cada presentacion se muestra en la tabla, siendo el de mayor diferencia frente al maximo, la <strong>Lubriderm reparación intensiva 946 ml</strong>, con un valor e <span class="math inline">\(\$36.530\)</span> correspondiente a <span class="math inline">\(45.3\%\)</span>.</p>
+</section>
+<section id="section-4" class="level3">
+<h3 class="anchored" data-anchor-id="section-4">5</h3>
+<p>Si se incluyeron tamaños comparables del mismo producto, ¿qué presentación y comercio tienen el menor precio por mL, g, mg o unidad?</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  medida                              producto                          linea
+1      g Lubriderm reparación intensiva 946 ml Lubriderm reparación intensiva
+2      g               Lubriderm FPS 15 400 ml               Lubriderm FPS 15
+3      g               Lubriderm FPS 15 200 ml               Lubriderm FPS 15
+4     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
+5     ml   Lubriderm humectación diaria 946 ml   Lubriderm humectación diaria
+6     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
+   comercio cantidad_total precio_cop precio_por_medida ranking
+1     Éxito            946      44070             46.59       1
+2     Éxito            400      34230             85.58       2
+3     Éxito            200      31350            156.75       3
+4 La Rebaja           1000      41700             41.70       1
+5     Éxito            946      46800             49.47       2
+6 Farmatodo           1000      55950             55.95       3</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  medida                              producto                          linea
+1      g Lubriderm reparación intensiva 946 ml Lubriderm reparación intensiva
+4     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
+   comercio cantidad_total precio_cop precio_por_medida ranking
+1     Éxito            946      44070             46.59       1
+4 La Rebaja           1000      41700             41.70       1</code></pre>
+</div>
+</div>
+<p>interpretacion: el comercio que tuvo el menor precio con respecto a la medida en gramos (<em>g</em>) y en presentacion de 946, fue el almacen Exito. Mientras que para la presentacion en militrios (<em>ml</em>) el comercio que tuvo menor precio fue LaRebaja.</p>
+</section>
+<section id="section-5" class="level3">
+<h3 class="anchored" data-anchor-id="section-5">6</h3>
+<p>¿Cuáles son las mayores diferencias de precio entre comercios? Ordenar las presentaciones por ahorro porcentual.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>                               producto precio_min precio_max diferencia_cop
+1 Lubriderm reparación intensiva 946 ml      44070      80600          36530
+2               Lubriderm FPS 15 400 ml      34230      54900          20670
+3   Lubriderm humectación diaria 400 ml      30555      46750          16195
+4   Lubriderm humectación diaria 946 ml      46800      71200          24400
+5     Nivea hidratación express 1000 ml      41700      55950          14250
+6               Lubriderm FPS 15 200 ml      31350      34900           3550
+7   Lubriderm humectación diaria 200 ml      27250      30100           2850
+8 Lubriderm humectación delicada 400 ml      43500      47100           3600
+9   Lubriderm humectación diaria 120 ml      19600      19650             50
+  ahorro_pct       mas_barato  mas_caro
+1       45.3            Éxito La Rebaja
+2       37.7            Éxito La Rebaja
+3       34.6            Éxito Farmatodo
+4       34.3            Éxito La Rebaja
+5       25.5        La Rebaja Farmatodo
+6       10.2            Éxito Farmatodo
+7        9.5            Éxito Farmatodo
+8        7.6            Éxito La Rebaja
+9        0.3 Éxito, La Rebaja Farmatodo</code></pre>
+</div>
+</div>
+<p>interpretacion: las mayores diferencias de precio entre comercios en ahorro porcentual alcanzan a superar el cuarenta porciento siendo el comercio mas barato almacen Exito y el mas caro LaRebaja. Se observa que cerca de la mitad de productos seleccionados para la comparacion superan el <span class="math inline">\(30\%\)</span> del ahorro porcentual, que corresponde a un ahorro en promedio cercano a los 15 mil pesos. Aqui se usaron dos medidas de comparacion de precios</p>
+<p><span class="math display">\[
+diferencia_{cop} = Pmax − Pmin
+\]</span></p>
+<p><span class="math display">\[
+\text{Ahorro (%)} = 100 \cdot \dfrac{\text{Pmax − Pmin}}{\text{Pmax}}
+\]</span></p>
+</section>
+<section id="section-6" class="level3">
+<h3 class="anchored" data-anchor-id="section-6">7</h3>
+<p>¿Qué datos faltantes o inconsistentes afectan la comparación y cuántos son?</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                                             problema
+1                                        productos publicados sin marca estandarizada
+2                             productos publicados sin contenido (ml/g) identificable
+3                                 productos publicados sin presentacion en el anuncio
+4                                                        productos publicados sin URL
+5 comparables con contenido distinto al del producto comun (posible SKU mal asignado)
+6            comparables sin precio en la corrida de referencia (comercio x producto)
+7                                    ejecuciones (comercio) que no quedaron completas
+   n total
+1 35   226
+2 25   226
+3 46   226
+4  0   226
+5  0    26
+6  1    27
+7  1     3</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  comercio id_producto                          producto
+1    Éxito           9 Nivea hidratación express 1000 ml</code></pre>
+</div>
+</div>
+<p>interpretacion: los datos faltantes que mas afectan la comparacion de productos en general es que las marcas no es compatibles en todos los establecimientos en cerca del <span class="math inline">\(12\%\)</span> (equivalentes a 35 productos de la captura inicial) de los establecimientos. Los datos inconsistentes que mas afectan la comparación es la falta de identificar o ser explicita la unidad de medida cercana al <span class="math inline">\(10\%\)</span> de los datos extraidos.</p>
+</section>
+<section id="section-7" class="level3">
+<h3 class="anchored" data-anchor-id="section-7">8</h3>
+<p>¿Cuántos productos de la categoría se obtuvieron por comercio y ejecución? ¿Cómo se compara el tamaño de la oferta entre comercios y qué proporción de productos tiene descripción, marca y contenido identificables?</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  codigo_corrida  comercio productos pct_de_la_oferta comparables
+1 20261017230148 Farmatodo       119             52.7           9
+2 20261017230148     Éxito        67             29.6           8
+3 20261017230148 La Rebaja        40             17.7           9
+  pct_con_descripcion pct_con_marca pct_con_contenido
+1                 100         100.0              89.9
+2                 100          47.8              80.6
+3                 100         100.0             100.0</code></pre>
+</div>
+</div>
+<p>interpretacion: De las dos ultimas ejecuciones se obtuvieron este numero de productos en cada uno de los comercios. El tamaño de la oferta es grande, siendo en algunos casos el doble de manera porcentual, por ejemplo los almacenes Farmatodo a Exito. En su mayoria de productos tienen descripcion y marca. El comerico que presenta menor porcentaje frente a la marca y contenido (cercano al 47%) de completitud de informacion es almacenes Exito.</p>
+</section>
+<section id="comparación-de-precios-y-presentaciones" class="level3">
+<h3 class="anchored" data-anchor-id="comparación-de-precios-y-presentaciones">Comparación de precios y presentaciones</h3>
+<section id="mismo-producto-en-diferentes-presentaciones" class="level4">
+<h4 class="anchored" data-anchor-id="mismo-producto-en-diferentes-presentaciones">Mismo producto en diferentes presentaciones</h4>
+<p>Cuando cambie la cantidad de contenido, calcular un precio por unidad común:</p>
+<p><span class="math display">\[
+\text{Precio por unidad de contenido} = \dfrac{\text{Precio del empaque (COP)}}{\text{Contenido total en la unidad elegida}}
+\]</span></p>
+<p>para hacer comparacion usar el precio por unidad</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>             linea                producto  comercio medida contenido
+1 Lubriderm FPS 15 Lubriderm FPS 15 200 ml     Éxito      g       200
+2 Lubriderm FPS 15 Lubriderm FPS 15 400 ml     Éxito      g       400
+3 Lubriderm FPS 15 Lubriderm FPS 15 200 ml La Rebaja     ml       200
+4 Lubriderm FPS 15 Lubriderm FPS 15 200 ml Farmatodo     ml       200
+5 Lubriderm FPS 15 Lubriderm FPS 15 400 ml Farmatodo     ml       400
+6 Lubriderm FPS 15 Lubriderm FPS 15 400 ml La Rebaja     ml       400
+  precio_envase precio_por_unidad ranking_comercio
+1         31350            156.75                1
+2         34230             85.58                1
+3         34400            172.00                2
+4         34900            174.50                3
+5         51800            129.50                2
+6         54900            137.25                3</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 26  8</code></pre>
+</div>
+</div>
+<p><strong>notas:</strong></p>
+<ul>
+<li>Convertir unidades: todas se convirtieron en unidades de medidas comparables o de minima escala</li>
+<li>paquetes múltiples: para los productos seleccionados en este analisis no se obtuvieron productos en paquetes o agrupados en promocion.</li>
+<li>ranking de precios estan en la misma unidad de medida</li>
+<li>no se realizaron agrupaciones adicionales</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="visualizaciones" class="level2">
+<h2 class="anchored" data-anchor-id="visualizaciones">Visualizaciones</h2>
+<section id="section-8" class="level3">
+<h3 class="anchored" data-anchor-id="section-8">1</h3>
+<p>comparar precios de las mismas presentaciones entre comercios</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="taller_1_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>interpretacion: como se desea comparar entre las presentaciones comparables entre los comercios es importante ver cada uno de los productos y su valor en cada uno de los ofertantes, es por ello que el anterior grafico muestra todas las presentaciones y su variacion en cada uno de los comercios, teniendo en cuenta para cada uno de los productos cual es el menor y cual el mayor precio y en que comercio, ademas de su porcentaje de variación del ahorro y el rango de valores de cada uno de los productos. En el siguiente grafico muestra los productos en orden de mayor ahorro por unidad de medida y la comparacion entre los comercios; una limitación se puede detallar es que solo el comercio Exito presenta en algunas ocasiones medidas en gramos a veces dificultando la comparabilidad.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="taller_1_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="section-9" class="level3">
+<h3 class="anchored" data-anchor-id="section-9">2</h3>
+<p>comparar precios por unidad de contenido cuando haya presentaciones equivalentes de distintos tamaños</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="taller_1_files/figure-html/viz2-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>interpretacion: como la idea es comparar aquellos productos tengan presentaciones equivalentes y que sean del mismo producto, aqui solo resultando dos productos que en el primer caso presenta dos cantidades y en el segundo tres posibles comparaciones del mismo producto en los comercios. Lo que sugieren es que el comercio Exito entre mayor es el contenido menor es su precio en ambos casos, con un diferencia mayoritaria para el primer producto dado que tiene un diferencia de <span class="math inline">\(\$50\)</span> por ml, lo cual es considerable. Mientras que para los otros dos comercios se mantienen en rangos similares de comparabilidad siendo menor Farmatodo que LaRebaja en estos dos productos.</p>
+</section>
+<section id="section-10" class="level3">
+<h3 class="anchored" data-anchor-id="section-10">3</h3>
+<p>identificar oportunidades de ahorro entre los comercios</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="taller_1_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>interpretacion: como el obejtivo es ver donde y en que producto hay oportunidad de ahorro, adicional al primer grafico se presenta una tabla de procentaje de ahorro en cada uno de los productos y en una escala de este, mostrando en rojo los precios que tiene un sobrecosto comparado al menor precio y en que presentacion. Adicional a ello se muestran en cada uno de los productos cual es el comercio con mayor descuento su porcentaje de ahorro y su equivalente en pesos. Mostrando en general que el comercio que produce mayor ahorro es almacen Exito en casi todas estas presentaciones de productos de cuidado corporal.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="taller_1_files/figure-html/viz3a-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="limitaciones-y-conclusiones" class="level2">
+<h2 class="anchored" data-anchor-id="limitaciones-y-conclusiones">Limitaciones y conclusiones</h2>
+<ul>
+<li><strong>Alcance.</strong> Se comparan solo las presentaciones del catálogo de comparables y tres comercios. No representan toda la categoría: un comercio puede ser más barato en estos productos y no en otros.</li>
+<li><strong>No se comparan promedios de surtidos distintos.</strong> El promedio de todos los productos publicados de cada comercio mezcla marcas, tamaños y gamas diferentes; por eso la comparación entre comercios se hace producto a producto y con una canasta idéntica.</li>
+<li><strong>Cobertura.</strong> La canasta incluye solo las presentaciones con precio en todos los comercios. Estas conclusiones vale únicamente para la canasta parcial estudiada.</li>
+<li><strong>Una sola ejecución.</strong> Los precios son una fotografía de la fecha y hora de la ejecución de referencia; cambian con el tiempo y no se puede juzgar su estabilidad con una observación.</li>
+<li><strong>Precios y promociones.</strong> <code>precio_cop</code> es el precio que paga cualquier cliente, e incluye la promoción general vigente. No se consideran descuentos condicionados (tarjeta, cupón, membresía), costos de envío ni diferencias por ciudad o tienda.</li>
+<li><strong>Precio por unidad.</strong> Solo compara presentaciones con la misma unidad (ml con ml). El contenido se lee del texto publicado; si el anuncio no lo trae o está mal escrito, la presentación no se puede comparar.</li>
+<li><strong>Líneas de producto.</strong> La línea se deriva del nombre quitando el contenido. Las presentaciones únicas (por ejemplo, “humectación delicada 400 ml” o Nivea 1000 ml) no tienen otro tamaño con el cual compararse.</li>
+<li><strong>Tamaño de la muestra.</strong> Con pocas presentaciones y una observación por precio no hay pruebas estadísticas; diferencias pequeñas (por ejemplo, de uno o dos puntos porcentuales) no deben leerse como diferencias firmes e inferenciales.</li>
+</ul>
+<p><strong>Dónde está el menor precio.</strong> En la ejecución 20261017230148, Éxito tiene el menor precio en 8 de 9 presentaciones comparables (los empates cuentan para cada comercio empatado).</p>
+<p><strong>Mayor diferencia entre comercios.</strong> Se da en <em>Lubriderm reparación intensiva 946 ml</em>: 45.3 % ($36.530) entre el comercio más barato y el más caro.</p>
+<p><strong>Envase frente a medida.</strong> De 6 combinaciones línea–comercio con más de un tamaño, en 6 el precio por ml <strong>baja</strong> al crecer el envase (pesa el costo por envase), en 0 <strong>se mantiene</strong> (el precio es proporcional a la medida) y en 0 <strong>sube</strong>. El precio del envase grande es mayor en 6 de 6 combinaciones; como el contenido también cambia, la conclusión útil para comparar es la del precio por ml.</p>
+<p><strong>Canasta comparable.</strong> Con 8 de 9 presentaciones presentes en todos los comercios, la canasta más barata es la de Éxito; la más cara cuesta 37.9 % más.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,10 @@
+"id_producto","producto_comparable","exito","farmatodo","larebaja","n_comercios","en_todos_los_comercios","precio_min","precio_max","comercio_mas_barato","brecha_pct","alguna_oferta_general","misma_corrida"
+1,"Lubriderm humectación diaria 200 ml",27250,30100,28700,3,TRUE,27250,30100,"exito",10.5,FALSE,TRUE
+2,"Lubriderm humectación diaria 400 ml",30555,46750,46000,3,TRUE,30555,46750,"exito",53,TRUE,TRUE
+3,"Lubriderm humectación diaria 946 ml",46800,55600,71200,3,TRUE,46800,71200,"exito",52.1,TRUE,TRUE
+4,"Lubriderm humectación delicada 400 ml",43500,46650,47100,3,TRUE,43500,47100,"exito",8.3,FALSE,TRUE
+5,"Lubriderm reparación intensiva 946 ml",44070,56800,80600,3,TRUE,44070,80600,"exito",82.9,TRUE,TRUE
+6,"Lubriderm humectación diaria 120 ml",19600,19650,19600,3,TRUE,19600,19650,"exito = larebaja",0.3,FALSE,TRUE
+7,"Lubriderm FPS 15 200 ml",31350,34900,34400,3,TRUE,31350,34900,"exito",11.3,FALSE,TRUE
+8,"Lubriderm FPS 15 400 ml",34230,51800,54900,3,TRUE,34230,54900,"exito",60.4,TRUE,TRUE
+9,"Nivea hidratación express 1000 ml",NA,55950,41700,2,FALSE,41700,55950,"larebaja",34.2,TRUE,TRUE

@@ -1,0 +1,1081 @@
+---
+title: "Comparador de precios"
+subtitle: "para productos de Cuidado corporal"
+author: "Sergio David Calderón Cuadrado"
+editor: visual
+format: html
+execute:
+  echo: false
+  warning: false
+params:
+  modo: "respaldo"          # "respaldo" = lee los CSV de raw/ | "linea" = scrapea en vivo
+  reconstruir_base: true    # true = reconstruye processed/precios.sqlite antes de analizar
+---
+
+Por medio del presente se realiza una recoleccion de datos mediante web scraping en comercios y farmacias con venta en línea en Colombia. Este análisis permite identificar dónde resulta más económico comprar algunos productos de esta categoria de artiuclos de cuidado personal. Se presentan tres establecimientos de comercio reconocidos y se encuentra el menor precio por unidad de contenido, en alguna de las presentaciones.
+
+## Introducción
+
+**categoría:** Cuidado corporal
+
+productos seleccionados:
+
+-   cremas hidratantes corporales
+-   aceite corporal
+-   exfoliante
+-   productos cosméticos para estrías = producto cosméticos para estría
+
+**Nota:** Excluye productos específicos para manos, pies y bebés. **Aclaracion:** se colocan palabras en singular
+
+objetivo de comparación:
+
+## Fuentes y documenteacion de especificaciones de cada comercio
+
+se seleccionaron tres comercios con venta en línea en Colombia que ofrecen estos productos de la categoría seleccionada
+
+se detallada la seleccion y caracterizacion de la busqueda por medios de criterios segun lo correspondiente a la estructura de cada pagina y de la distribucion en la pagina web particular de sus productos. Se ordena y especifica segun cada comercio como sigue:
+
+### LaRebaja
+
+pagina general: [link](https://www.larebajavirtual.com/crema%20hidratente%20corporal?_q=crema%20hidratente%20corporal&fuzzy=0&initialMap=ft&initialQuery=crema%20hidratente%20corporal&map=category-2,ft&operator=and&query=/cuidado-corporal/crema%20hidratente%20corporal&searchState)
+
+#### organizacion de sus categorías segun busqueda
+
+Busqueda: ***crema hidrante corporal***
+
+pagina: [link](https://www.larebajavirtual.com/crema%20hidrante%20corporal?_q=crema%20hidrante%20corporal&fuzzy=0&initialMap=ft&initialQuery=crema%20hidrante%20corporal&map=category-2,ft&operator=and&query=/cuidado-corporal/crema%20hidrante%20corporal&searchState)
+
+filtro de categoria: **cuidado corporal**
+
+observaciones: se expluye la categoria "corporal" porque trae productos para manos, arrugas y otros fuera de la categoria seleccionada. gel hidratante, si dice solo crema y no corporal se descarta, que no corresponde a la categoria seleccionada.
+
+Busqueda: ***aceite corporal***
+
+pagina principal: [link](https://www.larebajavirtual.com/aceite%20corporal?_q=aceite%20corporal&map=ft)
+
+pagina: [link](https://www.larebajavirtual.com/aceite%20corporal?_q=aceite%20corporal&fuzzy=0&initialMap=ft&initialQuery=aceite%20corporal&map=category-2,ft&operator=and&query=/cuidado-corporal/aceite%20corporal&searchState)
+
+filtro de categoria: **cuidado corporal**
+
+observaciones: se descarta la categoria "corporal" porque trae aceite para ducha y pomadas, que se salen de la categoria seleccionada
+
+Busqueda: ***exfoliante***
+
+pagina: [link](https://www.larebajavirtual.com/exfoliante?_q=exfoliante&fuzzy=0&initialMap=ft&initialQuery=exfoliante&map=category-2,ft&operator=and&query=/cuidado-corporal/exfoliante&searchState)
+
+filtro de categoria: **cuidado corporal**
+
+observaciones: no se toma en general porque trae productos que se salen de la categoria seleccionada.
+
+Busqueda: ***estrías***
+
+pagina: [link](https://www.larebajavirtual.com/estr%C3%ADas?_q=estr%C3%ADas&map=ft)
+
+observaciones: se deja sin categoria dado que la estrias se presentan tanto en la parte facial como en la corporal, no hay distincion de clases
+
+### Farmatodo
+
+pagina principial: [link](https://www.farmatodo.com.co/buscar?product=Crema%20corporal&departamento=Todos&filtros=)
+
+#### organizacion de sus categorías segun busqueda
+
+Busqueda: ***crema hidrante corporal***
+
+pagina: [link](https://www.farmatodo.com.co/buscar?product=crema%20hidratante%20corporal&departamento=Todos&filtros=%20AND%20%20categorie:%27Corporal%27%20AND%20fullPrice%20%3E%3D%2014950%20AND%20fullPrice%20%3C%3D%20256700)
+
+filtro de categoria: **corporal**
+
+pagina: [link](https://www.farmatodo.com.co/buscar?product=crema%20hidratante%20corporal&departamento=Todos&filtros=%20AND%20%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2014950%20AND%20fullPrice%20%3C%3D%20256700)
+
+filtro de subcategoria: **cuidado corporal** pero se deben descartar resultados como: - gel hidratante, si dice solo crema y no corporal se descarta, que no corresponde a la categoria seleccionada.
+
+observaciones: se quitan duplicados dado que se hace busquedas separadas y por ende pueden haber coincidencias de busqueda en ambos filtros de busqueda
+
+Busqueda: ***aceite corporal***
+
+[link](https://www.farmatodo.com.co/buscar?product=aceite%20corporal&departamento=Todos&filtros=%20AND%20%20categorie:%27Corporal%27%20AND%20fullPrice%20%3E%3D%2023900%20AND%20fullPrice%20%3C%3D%20244990)
+
+considera pertinente es: filtro de categoria: **corporal**
+
+[link](https://www.farmatodo.com.co/buscar?product=aceite%20corporal&departamento=Todos&filtros=%20AND%20%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2023900%20AND%20fullPrice%20%3C%3D%20244990)
+
+filtro de subcategoria: **cuidado corporal** pero se deben descartar resultados como: locion corporal, gel hidratante, crema de sol, que no corresponde a la categoria seleccionada.
+
+se quitan duplicados dado que se hace busquedas separadas y por ende pueden haber coincidencias de busqueda en ambos filtros de busqueda
+
+Busqueda: ***exfoliante***
+
+[link](https://www.farmatodo.com.co/buscar?product=exfoliante&departamento=Todos&filtros=%20AND%20%20categorie:%27Corporal%27%20OR%20categorie:%27Cuidado%20de%20la%20piel%27%20AND%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2011000%20AND%20fullPrice%20%3C%3D%20350900)
+
+considera pertinente es: filtro de categoria: **corporal y cuidado de la piel** y subcategoria: **cuidado corporal** con ambos filtros encuentra los productos correspondoentes a ambos bien definidos
+
+Busqueda: : ***estrías***
+
+[link](https://www.farmatodo.com.co/buscar?product=estr%C3%ADas&departamento=Todos&filtros=%20AND%20%20categorie:%27Corporal%27%20AND%20fullPrice%20%3E%3D%2054900%20AND%20fullPrice%20%3C%3D%20299900)
+
+considera pertinente es: filtro de categoria: **corporal**
+
+[link](https://www.farmatodo.com.co/buscar?product=estr%C3%ADas&departamento=Todos&filtros=%20AND%20%20subCategory:%27Cuidado%20corporal%27%20AND%20fullPrice%20%3E%3D%2054900%20AND%20fullPrice%20%3C%3D%20299900)
+
+filtro de subcategoria: **cuidado corporal** pero se deben descartar resultados como: locion corporal, gel hidratante, crema de sol, que no corresponde a la categoria seleccionada.
+
+[link](https://www.farmatodo.com.co/buscar?product=estr%C3%ADas&departamento=Todos&filtros=%20AND%20%20subCategory:%27Aceites%20corporales%27%20AND%20fullPrice%20%3E%3D%2054900%20AND%20fullPrice%20%3C%3D%20299900)
+
+filtro de subcategoria: **aceites corporales** pero se deben descartar resultados como: locion corporal, gel hidratante, crema de sol, que no corresponde a la categoria seleccionada.
+
+se quitan duplicados dado que se hace busquedas separadas y por ende pueden haber coincidencias de busqueda en ambos filtros de busqueda
+
+### EXITO
+
+pagina: [link](https://www.exito.com/s?q=crema+hidratante+corporal&category-2=cuidado-corporal&category-1=cuidado-personal&category-3=cremas-de-manos-y-cuerpo&category-1=cuidado-personal&facets=category-2%2Ccategory-1%2Ccategory-3&sort=score_desc&page=0)
+
+#### organizacion de sus categorías segun busqueda
+
+Busqueda: ***crema hidrante corporal***
+
+filtro: - departamento: **cuidado corporal** - categoria: **cuidado corporal** - subcategoria: **crema de manos y cuerpo**
+
+observaciones: dado que este almacen incorpora en estas clasificaciones pero se descartan los productos de manos y lo que no digan corporal, tambien se eliminar productos relacionados con bebes (baby) y que sean para manos.
+
+Busqueda: ***aceite corporal***
+
+pagina: [link](https://www.exito.com/s?q=aceite+corporal&category-1=cuidado-personal&category-2=cuidado-corporal&category-3=aceites-corporales&facets=category-1%2Ccategory-2%2Ccategory-3&sort=score_desc&page=0)
+
+filtro: - departamento: **cuidado personal** - categoria: **cuidado corporal** - subcategoria: **aceites corporales**
+
+observaciones: dado que este almacen incorpora en estas clasificaciones pero se descartan los productos de manos y lo que no digan corporal, tambien se eliminar productos relacionados con bebes (baby) y que sean para manos.
+
+Busqueda: ***exfoliante***
+
+pagina: [link](https://www.exito.com/s?q=exfoliante&category-1=cuidado-personal&category-2=cuidado-corporal&category-3=cremas-de-manos-y-cuerpo&facets=category-1%2Ccategory-2%2Ccategory-3&sort=score_desc&page=0)
+
+filtro: - departamento: **cuidado corporal** - categoria: **cuidado corporal** - subcategoria: **crema de manos y cuerpo**
+
+observaciones: se toman estas categorias porque este almacen tiene en cuenta los productos de cuidado corporal y discrimados que no son maquinas ni instrumentos relacionados con exfoliante. Se dejan unicamente crema y se descartan las que tengan que ver con manos o que no digan corporal.
+
+Busqueda: ***estrías***
+
+pagina:
+
+filtro: - departamento: **cuidado corporal** - categoria: **cuidado corporal** - subcategoria: **crema de manos y cuerpo** y **aceites corporales**
+
+observaciones: se toman todos con esos filtros. como son productos cosmeticos no se quitan los otros como cremas y aceitas que aparecen, como mantequillas y para masajes para estrias que no aparece en otros almacenes.
+
+## Scrapping
+
+La recoleccón de los datos de las paginas principales se recolectan por medio del metodo web-scrapping, un tipo de recoleccion masivo y eficiente de extraccion de datos por medio del software R. Para mayor detalle revisar codigo `scraper_general_1.R`
+
+### Recoleccion completa de los productos de la categoria correspondiente
+
+En cada comercio se extrae todos los productos listados en la categoría, no solo los que se usan para la comparación sino los resultantes de la busqueda de los prodcutos de esta categoria. Esto se hace recorriendo la paginación, el desplazamiento o los filtros necesarios mencionados anteriormente para asegurar la especificacion y la extraccion de los productos que pertenecen a la categoria segun las especificaciones del sitio web de los comercios.
+
+para ello se considera se considera en una sola corrida la extraccion conjunta y en linea de los tres comercios.
+
+```{r}
+#| label: setup
+#| include: false
+library(DBI)
+library(RSQLite)
+library(dplyr)
+library(tidyr)
+
+# ---- Carpeta del proyecto: la del .qmd ---------------------------------------
+# Al renderizar, Quarto fija la carpeta de trabajo en la del documento. Los .R
+# viven junto al .qmd; raw/ (respaldos CSV) y processed/ (base y salidas) se
+# crean solas dentro de esa carpeta si no existen. Para usar otra carpeta, define
+# la variable de entorno TALLER_DIR antes de renderizar.
+DIR_TALLER <- normalizePath(Sys.getenv("TALLER_DIR", unset = getwd()),
+                            winslash = "/", mustWork = TRUE)
+DIR_SALIDA <- file.path(DIR_TALLER, "processed")
+RUTA_DB    <- file.path(DIR_SALIDA, "precios.sqlite")
+
+# ---- Modo de ejecucion (parametros del encabezado YAML) -----------------------
+#   modo = "respaldo" : NO scrapea; reconstruye la base desde los CSV de raw/  (por defecto)
+#   modo = "linea"    : scrapea los tres comercios en vivo (necesita un navegador, tarda minutos)
+# Si el cuaderno se corre chunk por chunk (sin render), `params` no existe y se usan
+# la variable de entorno TALLER_MODO o, por defecto, "respaldo".
+MODO <- if (exists("params")) params$modo else Sys.getenv("TALLER_MODO", unset = "respaldo")
+stopifnot("modo debe ser 'respaldo' o 'linea'" = MODO %in% c("respaldo", "linea"))
+RECONSTRUIR <- if (exists("params")) isTRUE(params$reconstruir_base) else TRUE
+
+for (archivo in c("scraper_general_1.R", "sqlite_scraper.R")) {
+  if (!file.exists(file.path(DIR_TALLER, archivo))) {
+    stop("No encuentro ", archivo, " en ", DIR_TALLER,
+         ". Deja los .R en la misma carpeta que el .qmd.", call. = FALSE)
+  }
+}
+# funciones de la base (solo define funciones; no scrapea ni escribe nada)
+source(file.path(DIR_TALLER, "sqlite_scraper.R"), encoding = "UTF-8")
+```
+
+```{r}
+#| label: scraper
+#| include: false
+# Construye (o actualiza) la base antes de analizar. Se ejecuta si:
+#   - el modo es "linea", o
+#   - params$reconstruir_base es true, o
+#   - la base no existe / es de una version anterior (sin la columna `linea`).
+# Si ya hay una base vigente y reconstruir_base: false, se salta (render rapido).
+if (MODO == "linea" || RECONSTRUIR || !base_sqlite_vigente(RUTA_DB)) {
+  source(file.path(DIR_TALLER, "scraper_general_1.R"), encoding = "UTF-8")
+}
+```
+
+despues de la extraccion se hace una validacion del contenido y integridad de los datos extraidos, se corrobora la cantidad de datos pertenencientes a la pagina y los contenidos en las bases de datos construidas.
+
+tambien se detallan algunas consideraciones practicas que se deben tener en cuenta de los datos extraidos y para la transformacion y manipulacion de los datos, despues de una limpieza exhaustiva de los campos y tipos de variable.
+
+## Selección de los productos comparables
+
+para encontrar los productos que se van a comparar se realiza la busqueda manual en cada uno de los comercios y se comparan y verifican que los productos presentacion esten presente en los sitios wed de los comercios y se seleccionan los siguientes productos que corresponden a la categoria de productos de cuidado personal. Estos productos provienen de la misma extracción de la categoría y no se hacen búsquedas manuales adicionales.
+
+#### Productos para comparar:
+
+-   
+
+    1.  LUBRIDERM humectación diaria (200 ml)
+
+-   
+
+    2.  LUBRIDERM humectación diaria (400 ml)
+
+-   
+
+    3.  LUBRIDERM humectación diaria (946 ml)
+
+-   
+
+    4.  LUBRIDERM humectación delicada (400ml)
+
+-   
+
+    5.  LUBRIDERM intensiva reparación (946 ml)
+
+-   
+
+    6.  LUBRIDERM diaria (120 ml)
+
+-   
+
+    7.  LUBRIDERM 15 fps (200 ml)
+
+-   
+
+    8.  LUBRIDERM 15 fps (400 ml)
+
+-   
+
+    9.  NIVEA hidratacion (1000 ml)
+
+a estos ṕroductos identificados se procede a hacer la verificacion en la base de productos de cada comercio y se identifican los productos comparables en la base mediante un indicador de pertenencia al comparativo (columna es_comparable) y un identificador de producto para relacion entre los comercios con los mismos codigos de identificacion dados en la lista anterior (por ejemplo, id_producto = 1, para la crema corporal LUBRIDERM humectación diaria (200 ml) en los tres comercios seleccionados y asi sucesivamente)
+
+la extraccion permite realizar una obtener el ultimo precio registrado en la pagina, de donde se tiene como informacion comun para todos los comercios las URLs, fecha y hora de captura, para dar trazabilidad de los precios y de la posible actualiazcion. Tambien como registro de consulta y de extraccion.
+
+## Preparación
+
+el anterior scrapper permite internamiente realizar de manera alterna, una limpieza y normalizacion de los campos y variables recolectadas, por ejemplo, los precios se consideran en unidades de medida de pesos COP y se armonizan las diferentes unidades de medida para los productos encontrados en los tres comercios seleccionados.
+
+## Base SQLite
+
+luego procedemos a crear la base SQLite para el tratamiento y consulta de los datos por medio de tablas y vistas desde un formato de datos SQL. En el codigo `sqlite_scraper.R` se detalla el tratamiento de este tipo de estructura de base de datos, la creacion de tablas y las relaciones necesarias por medio de llaves principales y foraneas que permiten integrar y obtener una base de datos confiable y integra.
+
+```{r}
+#| label: conexion
+stopifnot("No existe la base o es de una version anterior: renderiza con reconstruir_base: true" =
+            base_sqlite_vigente(RUTA_DB))
+con <- dbConnect(SQLite(), RUTA_DB, flags = SQLITE_RO)   # solo lectura
+```
+
+despues de tener la base en un sistema de datos SQL, se procede a la creacion de tablas y sus relaciones como integracion de sistema de datos de forma segura y completa.
+
+luego se obtienen las tablas (ya relacionadas) mas relevantes para hacer consultas
+
+```{r}
+# Listamos las tablas disponibles
+dbListTables(con)
+```
+
+```{r}
+# Columnas de la tabla productos
+dbListFields(con, "v_observaciones")
+```
+
+observamos como estan los datos en la una de las tablas, por ejemplo en las observaciones.
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT *
+  FROM   v_observaciones;
+")
+head(resultado)
+```
+
+columnas de algunas tablas de interes
+
+```{r}
+# de otras posibles tablas de interes
+dbListFields(con, "comercios")
+dbListFields(con, "anuncios")
+dbListFields(con, "ejecuciones")
+```
+
+## Consultas SQL
+
+Con el proposito de comprender y dar respuesta primordial del documento, se explora y realizan algunas preguntas que permiten saber con claridad los comercios que ofrecen precios más comodos, sus ventajas entre competidores y resultados de analisis de la informacion contenida en la base. Por ejemplo podriamos preguntarnos:
+
+### 1
+
+¿Cuántos comercios, productos/presentaciones y observaciones contiene la base? ¿Cuántos productos aporta cada comercio?
+
+Numero de productos en general
+
+```{r}
+resultado1.3 <- dbGetQuery(con, "
+  SELECT   COUNT(DISTINCT sku)  AS n_productos,
+           COUNT(*)  AS n_observaciones
+  FROM     v_observaciones;
+")
+resultado1.3
+```
+
+Numero de productos en cada comercio
+
+```{r}
+resultado1.2 <- dbGetQuery(con, "
+  SELECT   comercio,
+           COUNT(DISTINCT sku)  AS n_productos
+  FROM     v_observaciones
+  GROUP BY comercio;
+")
+resultado1.2
+```
+
+Numero de productos dentro de cada comercio y categoria.
+
+```{r}
+# consultado
+resultado1.1 <- dbGetQuery(con, "
+  SELECT   comercio,
+           subcategoria_std,
+           COUNT(DISTINCT sku)  AS n_productos
+  FROM     v_observaciones
+  GROUP BY comercio, subcategoria_std;
+")
+resultado1.1
+```
+
+interpretacion: hay tres comercios, 264 productos distintos, hay 515 observaciones en total en la base. la cantidad de productos que registra cada comercio es 120 Farmatodo, 77 para LaRabaja y 67 para almacen Exito.
+
+### 2
+
+En una misma ejecución de recolección, ¿se obtuvieron al menos 24 observaciones comparables (ocho productos por tres comercios)? ¿Hay registros repetidos del mismo producto y comercio en esa ejecución?
+
+```{r}
+# columnas de la tablas necesarias
+dbListFields(con, "v_observaciones")
+dbListFields(con, "productos")
+```
+
+```{r}
+#| label: c2
+# 2.1 Observaciones comparables por ejecución frente a lo esperado
+#     esperadas = productos del catálogo x comercios (si el catálogo tiene 9, serán 27)
+resultado2.1 <- dbGetQuery(con, "
+  SELECT   codigo_corrida,
+           COUNT(*)                     AS obs_comparables,
+           COUNT(DISTINCT id_producto)  AS productos_distintos,
+           COUNT(DISTINCT comercio)     AS comercios,
+           (SELECT COUNT(*) FROM productos) * (SELECT COUNT(*) FROM comercios) AS esperadas,
+           COUNT(*) >= 24               AS cumple_24
+  FROM     v_observaciones
+  WHERE    es_comparable = 1
+  GROUP BY codigo_corrida
+  ORDER BY codigo_corrida
+")
+head(resultado2.1)
+```
+
+```{r}
+# 2.2 Repetidos: mismo producto comparable y comercio dentro de una ejecución
+#     (0 filas = no hay repetidos)
+resultado2.2 <- dbGetQuery(con, "
+  SELECT   codigo_corrida, comercio, id_producto, producto, COUNT(*) AS veces
+  FROM     v_observaciones
+  WHERE    es_comparable = 1
+  GROUP BY codigo_corrida, comercio, id_producto, producto
+  HAVING   COUNT(*) > 1
+")
+resultado2.2
+```
+
+```{r}
+# 2.3 Repetidos por nombre: mismo texto publicado con SKU distintos en un comercio y ejecución
+resultado2.3 <- dbGetQuery(con, "
+  SELECT   codigo_corrida, comercio, nombre_original, COUNT(*) AS veces
+  FROM     v_observaciones
+  GROUP BY codigo_corrida, comercio, nombre_original
+  HAVING   COUNT(*) > 1
+  ORDER BY veces DESC
+")
+head(resultado2.3)
+```
+
+interpretacion: Si, en una misma ejecucion, por ejemplo la ultima, si se obtuvieron al menos 24 observaciones para comparar, en nuestro caso particular se tiene 27 observaciones 9 por cada comercio. No existen repetidos en el sentido que tienen el mismo producto comparable y comercio dentro de una misma ejecución pero si hay registros repetidos por nombre de producto y comercio en esa ejecución en su mayoria del comercio LaRebaja.
+
+### 3
+
+Para cada presentación comparable, ¿cuáles son el precio mínimo, máximo y promedio? ¿Qué comercio ofrece el menor precio? Incluir los empates.
+
+para este caso se usa la opcion ultima corrida obtenida
+
+```{r}
+#| label: corrida-referencia
+corrida_ref <- dbGetQuery(con, "SELECT MAX(codigo_corrida) AS c FROM ejecuciones")$c
+# corrida_ref 
+```
+
+esta se toma como referencia. Los productos comparables se muestran a continuacion
+
+```{r}
+#| label: c3
+# Corrida de referencia: un precio por comercio y producto.
+# GROUP_CONCAT junta en una celda todos los comercios empatados en el mínimo.
+resultado3 <- dbGetQuery(con, "
+  WITH base AS (
+    SELECT id_producto, producto, comercio, precio_cop
+    FROM   v_observaciones
+    WHERE  es_comparable = 1 AND codigo_corrida = ?
+  ),
+  resumen AS (
+    SELECT id_producto, producto,
+           COUNT(*)                 AS n_comercios,
+           MIN(precio_cop)          AS precio_min,
+           MAX(precio_cop)          AS precio_max,
+           ROUND(AVG(precio_cop))   AS precio_prom
+    FROM   base
+    GROUP BY id_producto, producto
+  )
+  SELECT r.*, GROUP_CONCAT(b.comercio, ', ') AS comercio_menor_precio
+  FROM   resumen r
+  JOIN   base b ON b.id_producto = r.id_producto AND b.precio_cop = r.precio_min
+  GROUP BY r.id_producto
+  ORDER BY r.id_producto
+", params = list(corrida_ref))
+resultado3
+```
+
+```{r}
+resultado3.1 <- dbGetQuery(con, "
+  SELECT id_producto, producto, comercio, precio_cop
+  FROM   v_observaciones
+  WHERE  es_comparable = 1 AND codigo_corrida = ?
+  ORDER BY id_producto
+", params = list(corrida_ref))
+# resultado3.1
+```
+
+interpretacion: el comercio que ofrece el menor precio en casi en todos los productos es el almacen Exito, a excepción de dos productos, en **Lubriderm humectación diaria 120 ml** que tiene empate con LaRebaja y el segundo producto es **Nivea hidratación express 1000 ml** que obtiene un menor precio tambien LaRebaja. Algo que resaltar aqui es que el comercio Farmatodo no participa en ningun producto como de menor precio, es decir, entre estos productos seleccionados de cuidado personal el menos favorable es este.
+
+### 4
+
+¿Cuál es el ahorro en COP y en porcentaje al elegir la oferta más económica de cada presentación?
+
+```{r}
+#| label: c4
+# Ahorro = precio más alto - precio más bajo (frente a la oferta más cara)
+# y también frente al promedio de los comercios.
+resultado4 <- dbGetQuery(con, "
+  WITH resumen AS (
+    SELECT id_producto, producto,
+           MIN(precio_cop) AS precio_min,
+           MAX(precio_cop) AS precio_max,
+           AVG(precio_cop) AS precio_prom
+    FROM   v_observaciones
+    WHERE  es_comparable = 1 AND codigo_corrida = ?
+    GROUP BY id_producto, producto
+  )
+  SELECT id_producto, producto, precio_min, precio_max,
+         precio_max - precio_min                                   AS ahorro_vs_max_cop,
+         ROUND(100.0 * (precio_max - precio_min) / precio_max, 1)  AS ahorro_vs_max_pct,
+         ROUND(precio_prom - precio_min)                           AS ahorro_vs_prom_cop,
+         ROUND(100.0 * (precio_prom - precio_min) / precio_prom, 1) AS ahorro_vs_prom_pct
+  FROM   resumen
+  ORDER BY id_producto
+", params = list(corrida_ref))
+resultado4
+```
+
+interpretacion: el ahorro con respecto al maximo valor de los productos comparables de cada presentacion se muestra en la tabla, siendo el de mayor diferencia frente al maximo, la **Lubriderm reparación intensiva 946 ml**, con un valor e $\$36.530$ correspondiente a $45.3\%$.
+
+### 5
+
+Si se incluyeron tamaños comparables del mismo producto, ¿qué presentación y comercio tienen el menor precio por mL, g, mg o unidad?
+
+```{r}
+#| label: c5
+# Solo se comparan precios con la misma medida (ml con ml, g con g).
+# ranking = 1 es el menor precio por medida; RANK() deja los empates con el mismo número.
+
+resultado5 <- dbGetQuery(con, "
+  SELECT medida, producto, linea, comercio, cantidad_total, precio_cop, precio_por_medida,
+         RANK() OVER (PARTITION BY medida ORDER BY precio_por_medida) AS ranking
+  FROM   v_observaciones
+  WHERE  es_comparable = 1 AND codigo_corrida = ? AND precio_por_medida IS NOT NULL
+  ORDER BY medida, ranking, comercio
+", params = list(corrida_ref))
+head(resultado5)
+# names(resultado5)
+
+# Solo los ganadores (incluye empates)
+subset(resultado5, ranking == 1)
+```
+
+interpretacion: el comercio que tuvo el menor precio con respecto a la medida en gramos (*g*) y en presentacion de 946, fue el almacen Exito. Mientras que para la presentacion en militrios (*ml*) el comercio que tuvo menor precio fue LaRebaja.
+
+### 6
+
+¿Cuáles son las mayores diferencias de precio entre comercios? Ordenar las presentaciones por ahorro porcentual.
+
+```{r}
+#| label: c6
+resultado6 <- dbGetQuery(con, "
+  WITH base AS (
+    SELECT id_producto, producto, comercio, precio_cop
+    FROM   v_observaciones
+    WHERE  es_comparable = 1 AND codigo_corrida = ?
+  ),
+  resumen AS (
+    SELECT id_producto, producto,
+           MIN(precio_cop) AS precio_min, MAX(precio_cop) AS precio_max
+    FROM   base GROUP BY id_producto, producto
+  )
+  SELECT r.producto,
+         r.precio_min, r.precio_max,
+         r.precio_max - r.precio_min                                   AS diferencia_cop,
+         ROUND(100.0 * (r.precio_max - r.precio_min) / r.precio_max, 1) AS ahorro_pct,
+         (SELECT GROUP_CONCAT(b.comercio, ', ') FROM base b
+           WHERE b.id_producto = r.id_producto AND b.precio_cop = r.precio_min) AS mas_barato,
+         (SELECT GROUP_CONCAT(b.comercio, ', ') FROM base b
+           WHERE b.id_producto = r.id_producto AND b.precio_cop = r.precio_max) AS mas_caro
+  FROM   resumen r
+  ORDER BY ahorro_pct DESC
+", params = list(corrida_ref))
+resultado6
+# names(resultado6)
+```
+
+interpretacion: las mayores diferencias de precio entre comercios en ahorro porcentual alcanzan a superar el cuarenta porciento siendo el comercio mas barato almacen Exito y el mas caro LaRebaja. Se observa que cerca de la mitad de productos seleccionados para la comparacion superan el $30\%$ del ahorro porcentual, que corresponde a un ahorro en promedio cercano a los 15 mil pesos. Aqui se usaron dos medidas de comparacion de precios
+
+$$
+diferencia_{cop} = Pmax − Pmin
+$$
+
+$$
+\text{Ahorro (%)} = 100 \cdot \dfrac{\text{Pmax − Pmin}}{\text{Pmax}}
+$$
+
+### 7
+
+¿Qué datos faltantes o inconsistentes afectan la comparación y cuántos son?
+
+```{r}
+#| label: c7
+# n = casos con el problema, total = sobre cuántos se evaluó
+resultado7 <- dbGetQuery(con, "
+  SELECT 'productos publicados sin marca estandarizada' AS problema,
+         SUM(marca_std IS NULL) AS n, COUNT(*) AS total FROM anuncios
+  UNION ALL
+  SELECT 'productos publicados sin contenido (ml/g) identificable',
+         SUM(cantidad_total IS NULL), COUNT(*) FROM anuncios
+  UNION ALL
+  SELECT 'productos publicados sin presentacion en el anuncio',
+         SUM(presentacion_original IS NULL OR TRIM(presentacion_original) = ''), COUNT(*) FROM anuncios
+  UNION ALL
+  SELECT 'productos publicados sin URL',
+         SUM(url_producto IS NULL OR TRIM(url_producto) = ''), COUNT(*) FROM anuncios
+  UNION ALL
+  SELECT 'comparables con contenido distinto al del producto comun (posible SKU mal asignado)',
+         SUM(a.cantidad_total IS NULL OR a.cantidad_total <> p.cantidad_total), COUNT(*)
+  FROM   anuncios a JOIN productos p ON p.id_producto = a.id_producto
+  UNION ALL
+  SELECT 'comparables sin precio en la corrida de referencia (comercio x producto)',
+         SUM(NOT EXISTS (SELECT 1 FROM v_observaciones v
+                          WHERE v.id_producto = p.id_producto AND v.comercio = c.nombre
+                            AND v.codigo_corrida = ?)),
+         COUNT(*)
+  FROM   productos p CROSS JOIN comercios c
+  UNION ALL
+  SELECT 'ejecuciones (comercio) que no quedaron completas',
+         SUM(estado <> 'completa'), COUNT(*) FROM ejecuciones
+", params = list(corrida_ref))
+resultado7
+
+# Detalle de qué comparables faltan en la corrida de referencia
+resultado7.detalle <- dbGetQuery(con, "
+  SELECT c.nombre AS comercio, p.id_producto, p.nombre AS producto
+  FROM   productos p CROSS JOIN comercios c
+  WHERE  NOT EXISTS (SELECT 1 FROM v_observaciones v
+                      WHERE v.id_producto = p.id_producto AND v.comercio = c.nombre
+                        AND v.codigo_corrida = ?)
+  ORDER BY c.nombre, p.id_producto
+", params = list(corrida_ref))
+resultado7.detalle
+```
+
+interpretacion: los datos faltantes que mas afectan la comparacion de productos en general es que las marcas no es compatibles en todos los establecimientos en cerca del $12\%$ (equivalentes a 35 productos de la captura inicial) de los establecimientos. Los datos inconsistentes que mas afectan la comparación es la falta de identificar o ser explicita la unidad de medida cercana al $10\%$ de los datos extraidos.
+
+### 8
+
+¿Cuántos productos de la categoría se obtuvieron por comercio y ejecución? ¿Cómo se compara el tamaño de la oferta entre comercios y qué proporción de productos tiene descripción, marca y contenido identificables?
+
+```{r}
+#| label: c8
+# Una fila por (ejecución, comercio). Cada observación es un producto distinto
+# dentro de su ejecución, por eso COUNT(*) cuenta productos.
+resultado8 <- dbGetQuery(con, "
+  SELECT e.codigo_corrida,
+         c.nombre                                   AS comercio,
+         COUNT(*)                                   AS productos,
+         ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (PARTITION BY e.codigo_corrida), 1) AS pct_de_la_oferta,
+         SUM(a.id_producto IS NOT NULL)             AS comparables,
+         ROUND(100.0 * AVG(a.nombre_original IS NOT NULL AND TRIM(a.nombre_original) <> ''), 1) AS pct_con_descripcion,
+         ROUND(100.0 * AVG(a.marca_std IS NOT NULL), 1)       AS pct_con_marca,
+         ROUND(100.0 * AVG(a.cantidad_total IS NOT NULL), 1)  AS pct_con_contenido
+  FROM   observaciones o
+  JOIN   anuncios    a ON a.id_anuncio   = o.id_anuncio
+  JOIN   ejecuciones e ON e.id_ejecucion = o.id_ejecucion
+  JOIN   comercios   c ON c.id_comercio  = o.id_comercio
+  GROUP BY e.codigo_corrida, c.nombre
+  ORDER BY e.codigo_corrida, productos DESC
+")
+resultado8
+```
+
+interpretacion: De las dos ultimas ejecuciones se obtuvieron este numero de productos en cada uno de los comercios. El tamaño de la oferta es grande, siendo en algunos casos el doble de manera porcentual, por ejemplo los almacenes Farmatodo a Exito. En su mayoria de productos tienen descripcion y marca. El comerico que presenta menor porcentaje frente a la marca y contenido (cercano al 47%) de completitud de informacion es almacenes Exito.
+
+### Comparación de precios y presentaciones
+
+#### Mismo producto en diferentes presentaciones
+
+Cuando cambie la cantidad de contenido, calcular un precio por unidad común:
+
+$$
+\text{Precio por unidad de contenido} = \dfrac{\text{Precio del empaque (COP)}}{\text{Contenido total en la unidad elegida}}
+$$
+
+para hacer comparacion usar el precio por unidad
+
+```{r}
+#| label: c9-1
+tol_pct <- 1   # variación (en %) que se considera "igual"
+resultado9.1 <- dbGetQuery(con, "
+  SELECT   linea, producto, comercio, medida,
+           cantidad_total                              AS contenido,
+           precio_cop                                  AS precio_envase,
+           ROUND(precio_cop * 1.0 / cantidad_total, 2) AS precio_por_unidad,
+           RANK() OVER (PARTITION BY id_producto ORDER BY precio_cop) AS ranking_comercio
+  FROM     v_observaciones
+  WHERE    es_comparable = 1 AND codigo_corrida = :corrida AND cantidad_total IS NOT NULL
+  ORDER BY linea, medida, producto, cantidad_total, precio_cop
+", params = list(corrida = corrida_ref))
+head(resultado9.1)
+dim(resultado9.1)
+```
+
+```{r}
+#| label: c9-2
+resultado9.2 <- dbGetQuery(con, "
+  WITH base AS (
+    SELECT comercio, linea, medida, cantidad_total, precio_cop,
+           precio_cop * 1.0 / cantidad_total AS ppu
+    FROM   v_observaciones
+    WHERE  es_comparable = 1 AND codigo_corrida = :corrida
+      AND  linea IS NOT NULL AND cantidad_total IS NOT NULL
+  ),
+  ext AS (
+    SELECT comercio, linea, medida, COUNT(*) AS n_presentaciones,
+           MIN(cantidad_total) AS cont_menor, MAX(cantidad_total) AS cont_mayor
+    FROM   base
+    GROUP BY comercio, linea, medida
+    HAVING COUNT(*) >= 2
+  ),
+  cmp AS (
+    SELECT e.comercio, e.linea, e.medida, e.n_presentaciones,
+           s.cantidad_total AS contenido_menor, g.cantidad_total AS contenido_mayor,
+           s.precio_cop AS envase_menor, g.precio_cop AS envase_mayor,
+           s.ppu AS ppu_menor, g.ppu AS ppu_mayor,
+           100.0 * (g.precio_cop - s.precio_cop) / s.precio_cop AS var_envase_pct,
+           100.0 * (g.ppu - s.ppu) / s.ppu                      AS var_unidad_pct
+    FROM   ext e
+    JOIN   base s ON s.comercio = e.comercio AND s.linea = e.linea AND s.medida = e.medida
+                 AND s.cantidad_total = e.cont_menor
+    JOIN   base g ON g.comercio = e.comercio AND g.linea = e.linea AND g.medida = e.medida
+                 AND g.cantidad_total = e.cont_mayor
+  )
+  SELECT comercio, linea, medida, n_presentaciones,
+         contenido_menor, contenido_mayor,
+         envase_menor, envase_mayor,
+         ROUND(var_envase_pct, 1)  AS var_envase_pct,
+         ROUND(ppu_menor, 2)       AS ppu_menor,
+         ROUND(ppu_mayor, 2)       AS ppu_mayor,
+         ROUND(var_unidad_pct, 1)  AS var_por_unidad_pct,
+         CASE WHEN ABS(var_envase_pct) <= :tol THEN 'igual'
+              WHEN var_envase_pct > 0 THEN 'mayor' ELSE 'menor' END AS conclusion_envase,
+         CASE WHEN ABS(var_unidad_pct) <= :tol THEN 'igual'
+              WHEN var_unidad_pct > 0 THEN 'mayor' ELSE 'menor' END AS conclusion_por_unidad,
+         CASE WHEN ABS(var_unidad_pct) <= :tol
+                THEN 'Precio proporcional al contenido: el costo es por medida'
+              WHEN var_unidad_pct < 0
+                THEN 'El tamaño grande sale más barato por ml: pesa el costo por envase'
+              ELSE 'El tamaño grande sale más caro por ml: prima por tamaño'
+         END AS lectura
+  FROM   cmp
+  ORDER BY linea, comercio
+", params = list(corrida = corrida_ref, tol = tol_pct))
+# resultado9.2
+
+resultado9.3 <- dbGetQuery(con, "
+  WITH base AS (
+    SELECT id_producto, comercio, precio_cop, es_promocion
+    FROM   v_observaciones
+    WHERE  es_comparable = 1 AND codigo_corrida = :corrida
+  ),
+  canasta AS (
+    SELECT id_producto FROM base
+    GROUP BY id_producto
+    HAVING COUNT(DISTINCT comercio) = (SELECT COUNT(*) FROM comercios)
+  ),
+  tot AS (
+    SELECT comercio, COUNT(*) AS productos_en_canasta,
+           SUM(precio_cop) AS total_canasta_cop, SUM(es_promocion) AS con_promocion
+    FROM   base
+    WHERE  id_producto IN (SELECT id_producto FROM canasta)
+    GROUP BY comercio
+  )
+  SELECT t.comercio,
+         t.productos_en_canasta,
+         (SELECT COUNT(*) FROM productos) AS productos_catalogo,
+         t.total_canasta_cop,
+         t.total_canasta_cop - MIN(t.total_canasta_cop) OVER ()  AS sobrecosto_cop,
+         ROUND(100.0 * (t.total_canasta_cop - MIN(t.total_canasta_cop) OVER ())
+                     / MIN(t.total_canasta_cop) OVER (), 1)      AS sobrecosto_pct,
+         t.con_promocion,
+         (SELECT e.estado FROM ejecuciones e JOIN comercios c ON c.id_comercio = e.id_comercio
+           WHERE e.codigo_corrida = :corrida AND c.nombre = t.comercio) AS estado_ejecucion
+  FROM   tot t
+  ORDER BY t.total_canasta_cop
+", params = list(corrida = corrida_ref))
+```
+
+```{r}
+#| label: viz3-datos
+# consultado: ahorro de cada presentación = precio más alto - precio más bajo
+resultado9.5 <- dbGetQuery(con, "
+  WITH base AS (
+    SELECT id_producto, producto, comercio, precio_cop
+    FROM   v_observaciones
+    WHERE  es_comparable = 1 AND codigo_corrida = :corrida
+  ),
+  resumen AS (
+    SELECT id_producto, producto, MIN(precio_cop) AS precio_min, MAX(precio_cop) AS precio_max
+    FROM   base GROUP BY id_producto, producto
+  )
+  SELECT r.producto, r.precio_min, r.precio_max,
+         r.precio_max - r.precio_min AS diferencia_cop,
+         ROUND(100.0 * (r.precio_max - r.precio_min) / r.precio_max, 1) AS ahorro_pct,
+         (SELECT GROUP_CONCAT(b.comercio, ', ') FROM base b
+           WHERE b.id_producto = r.id_producto AND b.precio_cop = r.precio_min) AS mas_barato
+  FROM   resumen r
+  ORDER BY ahorro_pct DESC
+", params = list(corrida = corrida_ref))
+```
+
+**notas:**
+
+-   Convertir unidades: todas se convirtieron en unidades de medidas comparables o de minima escala
+-   paquetes múltiples: para los productos seleccionados en este analisis no se obtuvieron productos en paquetes o agrupados en promocion.
+-   ranking de precios estan en la misma unidad de medida
+-   no se realizaron agrupaciones adicionales
+
+```{r}
+#| label: cierre-consultas
+dbDisconnect(con)
+```
+
+## Visualizaciones
+
+```{r}
+#| label: graficos-setup
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(tidyr)
+library(tidytext)
+
+etiqueta_cop <- label_number(accuracy = 1, big.mark = ".", decimal.mark = ",", prefix = "$")
+tema <- theme_minimal(base_size = 12) +
+  theme(legend.position = "bottom", plot.title.position = "plot",
+        panel.grid.minor = element_blank())
+```
+
+### 1
+
+comparar precios de las mismas presentaciones entre comercios
+
+```{r}
+ggplot(
+  resultado6,
+  aes(y = reorder(producto, ahorro_pct))
+) +
+  geom_segment(
+    aes(
+      x = precio_min,
+      xend = precio_max,
+      yend = reorder(producto, ahorro_pct)
+    ),
+    color = "grey65",
+    linewidth = 1.2
+  ) +
+  geom_point(
+    aes(x = precio_min),
+    color = "#159D72",
+    size = 3
+  ) +
+  geom_point(
+    aes(x = precio_max),
+    color = "#D94F4F",
+    size = 3
+  ) +
+  geom_text(
+    aes(x = precio_min, label = mas_barato),
+    hjust = 1.1,
+    size = 3
+  ) +
+  geom_text(
+    aes(x = precio_max, label = mas_caro),
+    hjust = -0.1,
+    size = 3
+  ) +
+  geom_text(
+    aes(
+      x = (precio_min + precio_max) / 2,
+      label = paste0(ahorro_pct, "%")
+    ),
+    vjust = -0.8,
+    color = "#2457A7",
+    fontface = "bold",
+    size = 3.5
+  ) +
+  scale_x_continuous(
+    labels = label_number(big.mark = ".", decimal.mark = ","),
+    expand = expansion(mult = c(0.3, 0.4))
+  ) +
+  labs(
+    title = "Oportunidades de ahorro por producto",
+    subtitle = "Precio mínimo vs. máximo entre comercios",
+    x = "Precio (COP)",
+    y = NULL,
+    caption = paste(
+      "Verde: comercio más barato | Rojo: comercio más caro.",
+      "Porcentaje = ahorro respecto al precio máximo."
+    )
+  ) +
+  coord_cartesian(clip = "off") +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10),
+    plot.margin = margin(10, 100, 10, 10),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+interpretacion: como se desea comparar entre las presentaciones comparables entre los comercios es importante ver cada uno de los productos y su valor en cada uno de los ofertantes, es por ello que el anterior grafico muestra todas las presentaciones y su variacion en cada uno de los comercios, teniendo en cuenta para cada uno de los productos cual es el menor y cual el mayor precio y en que comercio, ademas de su porcentaje de variación del ahorro y el rango de valores de cada uno de los productos. En el siguiente grafico muestra los productos en orden de mayor ahorro por unidad de medida y la comparacion entre los comercios; una limitación se puede detallar es que solo el comercio Exito presenta en algunas ocasiones medidas en gramos a veces dificultando la comparabilidad.
+
+```{r}
+ggplot(
+  resultado5,
+  aes(
+    x = precio_por_medida,
+    y = reorder(producto, precio_por_medida),
+    fill = comercio
+  )
+) +
+  geom_col(
+    position = position_dodge(width = 0.8),
+    width = 0.7
+  ) +
+  # facet_wrap( ~ medida, scales = "free_y"  ) +
+  scale_x_continuous(
+    labels = label_number(
+      big.mark = ".",
+      decimal.mark = ","
+    )
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Ranking de precios por producto y comercio",
+    subtitle = "Comparación por unidad de medida",
+    x = "Precio por medida (COP)",
+    y = NULL,
+    fill = "Comercio"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.y = element_text(size = 9),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+### 2
+
+comparar precios por unidad de contenido cuando haya presentaciones equivalentes de distintos tamaños
+
+```{r}
+#| label: viz2
+#| fig-height: 5
+#| fig-width: 9
+# consultado: resultado9.1, solo líneas con al menos dos tamaños
+d2 <- resultado9.1 |>
+  group_by(linea, medida) |>
+  filter(n_distinct(contenido) >= 2) |>
+  ungroup()
+
+ggplot(d2, aes(x = contenido, y = precio_por_unidad, colour = comercio, group = comercio)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 3) +
+  facet_wrap(~ linea, scales = "free_x", labeller = label_wrap_gen(30)) +
+  scale_x_continuous(breaks = function(x) sort(unique(d2$contenido[d2$contenido >= x[1] & d2$contenido <= x[2]]))) +
+  scale_y_continuous(labels = etiqueta_cop) +
+  expand_limits(y = 0) +
+  labs(title = "Precio por unidad de contenido",
+       subtitle = "Misma línea de producto en presentaciones equivalentes",
+       x = "Contenido del envase (ml)", y = "COP por ml", colour = NULL) +
+  tema
+```
+
+interpretacion: como la idea es comparar aquellos productos tengan presentaciones equivalentes y que sean del mismo producto, aqui solo resultando dos productos que en el primer caso presenta dos cantidades y en el segundo tres posibles comparaciones del mismo producto en los comercios. Lo que sugieren es que el comercio Exito entre mayor es el contenido menor es su precio en ambos casos, con un diferencia mayoritaria para el primer producto dado que tiene un diferencia de $\$50$ por ml, lo cual es considerable. Mientras que para los otros dos comercios se mantienen en rangos similares de comparabilidad siendo menor Farmatodo que LaRebaja en estos dos productos.
+
+### 3
+
+identificar oportunidades de ahorro entre los comercios
+
+```{r}
+calor <- resultado5 %>%
+  group_by(medida, producto) %>%
+  filter(medida == "ml") %>%
+  mutate(
+    precio_referencia = min(precio_por_medida, na.rm = TRUE),
+    sobreprecio_pct = 100 * (
+      precio_por_medida / precio_referencia - 1
+    )
+  ) %>%
+  ungroup() %>%
+  mutate(
+    producto_ordenado = tidytext::reorder_within(
+      producto,
+      sobreprecio_pct,
+      medida,
+      fun = max
+    )
+  )
+
+ggplot(
+  calor,
+  aes(
+    x = comercio,
+    y = producto_ordenado,
+    fill = sobreprecio_pct
+  )
+) +
+  geom_tile(color = "white", linewidth = 0.4) +
+  geom_text(
+    aes(label = paste0(round(sobreprecio_pct), "%")),
+    size = 3
+  ) +
+  facet_wrap(~ medida, scales = "free_y") +
+  scale_y_reordered() +
+  scale_fill_gradient2(
+    low = "#159D72",
+    mid = "grey65",
+    high = "#D94F4F",
+    midpoint = 15,
+    name = "Sobreprecio (%)"
+  ) +
+  labs(
+    title = "Mapa de calor de oportunidades de ahorro",
+    subtitle = "Sobrecosto frente al comercio más barato",
+    x = NULL,
+    y = NULL
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(
+      # angle = 35,
+      hjust = 1
+    ),
+    panel.grid = element_blank()
+  )
+
+```
+
+interpretacion: como el obejtivo es ver donde y en que producto hay oportunidad de ahorro, adicional al primer grafico se presenta una tabla de procentaje de ahorro en cada uno de los productos y en una escala de este, mostrando en rojo los precios que tiene un sobrecosto comparado al menor precio y en que presentacion. Adicional a ello se muestran en cada uno de los productos cual es el comercio con mayor descuento su porcentaje de ahorro y su equivalente en pesos. Mostrando en general que el comercio que produce mayor ahorro es almacen Exito en casi todas estas presentaciones de productos de cuidado corporal.
+
+```{r}
+#| label: viz3a
+#| fig-height: 5
+#| fig-width: 9
+d3 <- resultado9.5 |>
+  mutate(producto  = reorder(producto, ahorro_pct),
+         categoria = ifelse(ahorro_pct == 0, "Sin diferencia", mas_barato))
+niveles <- unique(d3$categoria)
+paleta  <- setNames(hue_pal()(length(niveles)), niveles)
+paleta["Sin diferencia"] <- "grey70"
+
+ggplot(d3, aes(x = ahorro_pct, y = producto, fill = categoria)) +
+  geom_col() +
+  geom_text(aes(label = paste0(ahorro_pct, " %  (", etiqueta_cop(diferencia_cop), ")")),
+            hjust = -0.05, size = 3.2) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.4))) +
+  scale_fill_manual(values = paleta) +
+  guides(fill = guide_legend(nrow = 2, title.position = "top")) +
+  labs(title = "Ahorro al comprar en el comercio más barato de cada presentación",
+       subtitle = "Frente al comercio más caro · entre paréntesis, ahorro en COP · empates: varios comercios",
+       x = "Ahorro (%)", y = NULL, fill = "Comercio más barato") +
+  tema
+```
+
+## Limitaciones y conclusiones
+
+-   **Alcance.** Se comparan solo las presentaciones del catálogo de comparables y tres comercios. No representan toda la categoría: un comercio puede ser más barato en estos productos y no en otros.
+-   **No se comparan promedios de surtidos distintos.** El promedio de todos los productos publicados de cada comercio mezcla marcas, tamaños y gamas diferentes; por eso la comparación entre comercios se hace producto a producto y con una canasta idéntica.
+-   **Cobertura.** La canasta incluye solo las presentaciones con precio en todos los comercios. Estas conclusiones vale únicamente para la canasta parcial estudiada.
+-   **Una sola ejecución.** Los precios son una fotografía de la fecha y hora de la ejecución de referencia; cambian con el tiempo y no se puede juzgar su estabilidad con una observación.
+-   **Precios y promociones.** `precio_cop` es el precio que paga cualquier cliente, e incluye la promoción general vigente. No se consideran descuentos condicionados (tarjeta, cupón, membresía), costos de envío ni diferencias por ciudad o tienda.
+-   **Precio por unidad.** Solo compara presentaciones con la misma unidad (ml con ml). El contenido se lee del texto publicado; si el anuncio no lo trae o está mal escrito, la presentación no se puede comparar.
+-   **Líneas de producto.** La línea se deriva del nombre quitando el contenido. Las presentaciones únicas (por ejemplo, "humectación delicada 400 ml" o Nivea 1000 ml) no tienen otro tamaño con el cual compararse.
+-   **Tamaño de la muestra.** Con pocas presentaciones y una observación por precio no hay pruebas estadísticas; diferencias pequeñas (por ejemplo, de uno o dos puntos porcentuales) no deben leerse como diferencias firmes e inferenciales.
+
+```{r}
+#| label: hallazgos-datos
+n_presentaciones <- nrow(resultado9.5)
+gana <- resultado9.5 |>
+  separate_rows(mas_barato, sep = ", ") |>
+  count(mas_barato, sort = TRUE)
+top <- resultado9.5[which.max(resultado9.5$ahorro_pct), ]
+n_lineas <- nrow(resultado9.2)
+n_baja   <- sum(resultado9.2$conclusion_por_unidad == "menor")
+n_igual  <- sum(resultado9.2$conclusion_por_unidad == "igual")
+n_sube   <- sum(resultado9.2$conclusion_por_unidad == "mayor")
+n_env_mayor <- sum(resultado9.2$conclusion_envase == "mayor")
+hay_canasta <- nrow(resultado9.3) > 0
+```
+
+**Dónde está el menor precio.** En la ejecución `r corrida_ref`, `r gana$mas_barato[1]` tiene el menor precio en `r gana$n[1]` de `r n_presentaciones` presentaciones comparables (los empates cuentan para cada comercio empatado).
+
+**Mayor diferencia entre comercios.** Se da en *`r top$producto`*: `r top$ahorro_pct` % (`r etiqueta_cop(top$diferencia_cop)`) entre el comercio más barato y el más caro.
+
+**Envase frente a medida.** De `r n_lineas` combinaciones línea–comercio con más de un tamaño, en `r n_baja` el precio por ml **baja** al crecer el envase (pesa el costo por envase), en `r n_igual` **se mantiene** (el precio es proporcional a la medida) y en `r n_sube` **sube**. El precio del envase grande es mayor en `r n_env_mayor` de `r n_lineas` combinaciones; como el contenido también cambia, la conclusión útil para comparar es la del precio por ml.
+
+**Canasta comparable.** `r if (hay_canasta) paste0("Con ", resultado9.3$productos_en_canasta[1], " de ", resultado9.3$productos_catalogo[1], " presentaciones presentes en todos los comercios, la canasta más barata es la de ", resultado9.3$comercio[1], "; la más cara cuesta ", resultado9.3$sobrecosto_pct[nrow(resultado9.3)], " % más.") else "No hay presentaciones con precio en todos los comercios en esta ejecución, así que no se puede construir una canasta comparable."`
