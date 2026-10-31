@@ -1,0 +1,730 @@
+---
+title: "Practica 7"
+subtitle: "Limpieza, transformación y normalización de datos"
+author: "Practica 7"
+format: html
+editor: visual
+---
+
+```{r, librerias, warning=FALSE}
+set.seed(2024)
+setwd("/media/dave7177/Nuevo vol/1 Full Dave/SUBJECTS/X-CURRENT-2026-2/Mineria/Repo/dm_2016325_2026_2/sergio_david_calderon_cuadrado/Practica_07/")
+library(purrr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+```
+
+```{r, funciones}
+
+```
+
+
+# Ejercicios prácticos
+
+Los ejercicios están ordenados de menor a mayor dificultad. Además de obtener el resultado, cada uno exige **justificar por escrito las decisiones de limpieza** (entre 2 y 4 líneas): en preprocesamiento no hay una única respuesta correcta, pero sí decisiones bien o mal argumentadas.
+
+Reglas generales
+
+Todo el trabajo debe ser reproducible: use set.seed(2024) antes de cualquier muestreo. Prefiera **funciones reutilizables** y **purrr** en lugar de copiar y pegar código. **Verifique cada transformación con una comprobación explícita (stopifnot()**, un conteo o un gráfico). Cuando el ejercicio lo indique, escriba también el equivalente en Python.
+
+## Ejercicio 1: faltantes que no son faltantes
+
+Dificultad: media. Dataset: house_prices.csv.
+
+```{r}
+house_prices <- read.csv("/media/dave7177/Nuevo vol/1 Full Dave/SUBJECTS/X-CURRENT-2026-2/Mineria/Repo/dm_2016325_2026_2/sergio_david_calderon_cuadrado/bases/house_prices.csv")
+head(house_prices)
+str(house_prices)
+```
+
+En este dataset un NA no siempre significa “dato perdido”: en columnas como PoolQC, Alley, GarageType o BsmtQual, el NA suele indicar que la vivienda no tiene ese elemento.
+
+```{r}
+house_prices |> filter(is.na(PoolQC)) |> nrow()
+house_prices|>
+  filter(if_any(c(PoolQC, Alley, GarageType, BsmtQual), is.na)) |>
+  nrow()
+house_prices|> nrow()
+```
+
+
+```{r}
+glimpse(house_prices)
+```
+
+```{r}
+summary(house_prices)
+```
+
+
+Calcule el porcentaje de NA de cada columna y aplique la regla de la sección 3.2 (eliminar columnas con más de 50 % de NA). Liste las columnas que se perderían y explique qué información se pierde al eliminar PoolQC.
+
+```{r}
+cat("Sin NA (ninguna col):", house_prices |> drop_na() |> nrow(), "\n")
+cat("Sin NA en PoolQC, Alley, GarageType, BsmtQual:", house_prices |> drop_na(PoolQC, Alley, GarageType, BsmtQual) |> nrow(), "\n")
+```
+
+```{r}
+resumen_na <- house_prices |>
+  map_df(~ sum(is.na(.x))) |>
+  pivot_longer(everything(), names_to = "columna", values_to = "n_na") |>
+  mutate(
+    pct_na   = round(n_na / nrow(house_prices) * 100, 1),
+    tiene_na = n_na > 0
+  ) |>
+  filter(tiene_na) |>
+  arrange(desc(pct_na))
+resumen_na
+```
+
+```{r}
+resumen_na |>
+  ggplot(aes(x = reorder(columna, pct_na), y = pct_na, fill = pct_na > 30)) +
+  geom_col() +
+  geom_text(aes(label = paste0(pct_na, "%")), hjust = -0.1, size = 4) +
+  coord_flip() +
+  scale_fill_manual(values = c("steelblue", "firebrick"), guide = "none") +
+  scale_y_continuous(limits = c(0, 105)) +
+  labs(
+    title   = "Porcentaje de valores faltantes por columna",
+    x       = NULL, y     = "% faltante"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+
+
+```{r}
+diagnostico <- house_prices |>
+  map_df(~ tibble(
+    tipo        = class(.x)[1],
+    n_unicos    = n_distinct(.x, na.rm = TRUE),
+    n_na        = sum(is.na(.x)),
+    ejemplo     = as.character(.x[!is.na(.x)][1])
+  ), .id = "columna")
+diagnostico
+```
+
+```{r}
+umbral_cols <- 0.50  # eliminar si > 50% NA
+house_prices_limpio <- house_prices |>
+  select(where(~ mean(is.na(.x)) <= umbral_cols))
+
+cat("Columnas antes:", ncol(house_prices), "\n")
+cat("Columnas después:", ncol(house_prices_limpio), "\n")
+cat("Eliminadas:", setdiff(names(house_prices), names(house_prices_limpio)), "\n")
+
+```
+
+la informacion que se pierde al eliminar la variable 
+
+```{r}
+levels(as.factor(house_prices$PoolQC))
+```
+
+NA generalmente significa que la vivienda no tiene piscina. Los valores como Ex, Gd, TA, Fa indican la calidad de la piscina. se pierde la info de si la vivienda tiene o no piscina y de la calidad de la piscina cuando existe.
+
+Compruebe la hipótesis anterior en tres grupos de columnas: Garage\* frente a GarageArea, Bsmt\* frente a TotalBsmtSF y PoolQC frente a PoolArea. Para cada grupo, cruce is.na(...) con la condición area == 0 e identifique las filas donde la coincidencia falla: esos son los faltantes reales. ¿Cuántos hay en cada grupo? Pista: la propia área también puede ser NA.
+
+```{r}
+# grupo 1
+house_prices |>
+  select(PoolQC, PoolArea, LotArea) |>
+  filter(if_any(c(PoolQC, PoolArea), is.na) & LotArea == 0)
+
+# grupo 2
+house_prices |>
+  select(GarageCars, GarageArea, LotArea) |>
+  filter(if_any(c(GarageCars, GarageArea), is.na) & LotArea == 0)
+
+# grupo 3
+house_prices |>
+  select(BsmtCond, TotalBsmtSF, LotArea) |>
+  filter(if_any(c(BsmtCond, TotalBsmtSF), is.na) & LotArea == 0)
+
+# otra opcion
+house_prices |>
+  select(str_detect(colnames(.x), "Bsmt\\.")), TotalBsmtSF, LotArea) |>
+  filter(is.na(.x)) |>
+  filter( LotArea == 0)
+```
+
+```{r}
+house_prices |>
+  select(PoolQC, PoolArea) |>
+  filter(is.na(PoolQC)) |>
+  mutate(
+    tipo = case_when(
+      PoolArea == 0 ~ "NA estructural",
+      PoolArea > 0 ~ "Faltante real",
+      is.na(PoolArea) ~ "Área desconocida"
+    )
+  ) |>
+  count(tipo)
+
+house_prices |> group_by(tipo) |> head()
+```
+
+```{r}
+house_prices |>
+  select(starts_with("Bsmt"), TotalBsmtSF) |>
+  filter(if_any(starts_with("Bsmt"), is.na)) |>
+  mutate(
+    tipo = case_when(
+      TotalBsmtSF == 0 ~ "NA estructural",
+      TotalBsmtSF > 0 ~ "Faltante real",
+      is.na(TotalBsmtSF) ~ "Área desconocida"
+    )
+  ) |>
+  count(tipo)
+```
+
+```{r}
+house_prices |>
+  select(starts_with("Garage"), GarageArea) |>
+  filter(if_any(starts_with("Garage"), is.na)) |>
+  mutate(
+    tipo = case_when(
+      GarageArea == 0 ~ "NA estructural",
+      GarageArea > 0 ~ "Faltante real",
+      is.na(GarageArea) ~ "Área desconocida"
+    )
+  ) |>
+  count(tipo)
+```
+
+Escriba una función recodificar_ausencia(df, cols, area) que reemplace por "Ninguno" únicamente los NA estructurales (donde area == 0) y deje como NA los faltantes reales. Debe operar solo sobre columnas de tipo carácter. Aplíquela a los tres grupos con purrr (por ejemplo, reduce() sobre una lista de especificaciones).
+
+```{r}
+recodificar_ausencia <- function(df, cols, area) {
+  df |>
+    mutate(
+      across(
+        all_of(cols),
+        ~ if_else(
+          is.na(.x) & .data[[area]] == 0,
+          "Ninguno",
+          .x
+        )
+      )
+    )
+}
+# recodificar_ausencia(house_prices, )
+```
+
+```{r}
+# especificaciones de esta base particular
+especificaciones <- list(
+
+  list(
+    cols = c("PoolQC"),
+    area = "PoolArea"
+  ),
+
+  list(
+    cols = c(
+      "GarageType",
+      "GarageFinish",
+      "GarageQual",
+      "GarageCond"
+    ),
+    area = "GarageArea"
+  ),
+
+  list(
+    cols = c(
+      "BsmtQual",
+      "BsmtCond",
+      "BsmtExposure",
+      "BsmtFinType1",
+      "BsmtFinType2"
+    ),
+    area = "TotalBsmtSF"
+  )
+
+)
+
+house_prices_recodificado <- reduce(
+  especificaciones,
+  ~ recodificar_ausencia(
+    df = .x,
+    cols = .y$cols,
+    area = .y$area
+  ),
+  .init = house_prices
+)
+```
+
+
+
+Impute LotFrontage con la mediana por Neighborhood y compárela con la imputación con la mediana global. ¿En qué barrios difieren más? Grafique la diferencia por barrio.
+
+```{r}
+house_prices_limpio_1 <- house_prices |>
+  mutate(
+    LotFrontage_imp = if_else(
+      is.na(LotFrontage),
+      median(LotFrontage, na.rm = TRUE),
+      LotFrontage
+    )
+  )
+
+# agrupado
+house_prices_limpio <- house_prices |>
+  group_by(Neighborhood) |>
+  mutate(
+    LotFrontage_imp_barrio = if_else(
+      is.na(LotFrontage),
+      median(LotFrontage, na.rm = TRUE),
+      LotFrontage
+    )
+  ) |> ungroup()
+
+mediana_global <- median(
+  house_prices$LotFrontage,
+  na.rm = TRUE
+)
+
+comparacion <- house_prices |>
+  group_by(Neighborhood) |>
+  summarise(
+    mediana_barrio = median(LotFrontage, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    mediana_global = mediana_global,
+    diferencia = mediana_barrio - mediana_global,
+    diferencia_abs = abs(diferencia)
+  ) |>
+  arrange(desc(diferencia_abs))
+comparacion
+```
+
+
+```{r}
+bind_rows(
+  tibble(
+    valor = house_prices$LotFrontage[!is.na(house_prices_limpio_1$LotFrontage)],
+    tipo = "Original"),
+  tibble(
+    valor = house_prices_limpio_1$LotFrontage_imp, tipo = "Imputada")) |>
+  ggplot(aes(x = valor, fill = tipo)) +
+  # facet_wrap(vars(Neighborhood),ncol=2)+
+  geom_density(alpha = 0.5) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(title = "Distribución de LotFrontage: original vs. imputada con mediana",
+       x = "LotFrontage", y = "Densidad", fill = NULL) +
+  theme_minimal(base_size = 13)
+
+comparacion |>
+  ggplot(
+    aes(
+      x = reorder(Neighborhood, diferencia),
+      y = diferencia,
+      fill = diferencia > 0
+    )
+  ) +
+  geom_col() +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_fill_manual(
+    values = c("TRUE" = "steelblue", "FALSE" = "tomato"),
+    guide = "none"
+  ) +
+  labs(
+    title = "Diferencia entre medianas de LotFrontage",
+    subtitle = "Mediana por barrio - Mediana global",
+    x = "Neighborhood",
+    y = "Diferencia de medianas"
+  ) +
+  theme_minimal()
+```
+
+La imputación por barrio puede ser más representativa porque las dimensiones de los frentes de los terrenos pueden variar entre vecindarios. Por tanto, cuando existen diferencias importantes entre las medianas, utilizar una mediana global puede introducir distorsiones en la distribución de los datos. Los barrios con mayores diferencias absolutas son aquellos donde las dos estrategias de imputación producen resultados más distintos.
+
+Cree edad_vivienda = YrSold - YearBuilt y detecte los registros con valores imposibles (edad negativa, GarageYrBlt posterior a YrSold, años mayores a 2010, que es el último año de venta del dataset). Decida en cada caso si corrige, convierte a NA o elimina la fila; implemente la decisión con case_when() y deje una columna bandera dato_corregido.
+
+```{r}
+house_prices_tmp <- house_prices |>
+  mutate(edad_vivienda = YrSold - YearBuilt) |>
+  select(GarageYrBlt, YrSold, YearBuilt, edad_vivienda) |>
+  filter(edad_vivienda<0 | GarageYrBlt > YrSold | YearBuilt > 2010) # |>  nrow()
+house_prices_tmp
+
+house_prices_v.obser <- house_prices_tmp |>
+  mutate(
+    observacion = case_when(
+      edad_vivienda<0 | YearBuilt > 2010     ~ "mirar YearBuilt",
+      GarageYrBlt > YrSold ~ "mirar GarageYrBlt",
+      TRUE                 ~ "sin"
+    )
+  )
+house_prices_v.obser
+```
+
+Discretice edad_vivienda en 4 grupos con los cuartiles usando cut() (con include.lowest = TRUE) y compare el resultado con ntile(edad_vivienda, 4). ¿Coinciden los grupos? Explique por qué ntile() puede asignar a grupos distintos dos viviendas con la misma edad y cut() no. Compare la mediana de SalePrice por grupo.
+
+```{r}
+house_prices_cut_edad_viv <- house_prices |>
+  mutate(edad_vivienda = YrSold - YearBuilt) |>
+  select(GarageYrBlt, YrSold, YearBuilt, edad_vivienda, SalePrice) |>
+  mutate(
+    grupo_edad = cut(
+      edad_vivienda, breaks = 4,
+      labels = c("nueva", "reciente", "antiguo", "vejestorio"),
+      right  = TRUE,
+      include.lowest = TRUE
+    )
+  )
+house_prices_cut_edad_viv %>% head()
+house_prices_cut_edad_viv |>
+  group_by(grupo_edad) |>
+  summarise(
+    n                 = n(),
+    SalePrice_min     = round(min(SalePrice, na.rm = TRUE), 1),
+    SalePrice_max     = round(max(SalePrice, na.rm = TRUE), 1),
+    SalePrice_median  = round(mean(SalePrice, na.rm = TRUE), 3),
+    .groups = "drop"
+  )
+
+house_prices_ntile_edad_viv <- house_prices |>
+  mutate(edad_vivienda = YrSold - YearBuilt) |>
+  select(GarageYrBlt, YrSold, YearBuilt, edad_vivienda, SalePrice) |>
+  mutate(
+    grupo_edad = ntile(edad_vivienda, 4) |>
+      factor(labels = c("nueva", "reciente", "antiguo", "vejestorio"))
+  )
+house_prices_ntile_edad_viv %>% head()
+house_prices_ntile_edad_viv |>
+  group_by(grupo_edad) |>
+  summarise(
+    n                 = n(),
+    SalePrice_min     = round(min(SalePrice, na.rm = TRUE), 1),
+    SalePrice_max     = round(max(SalePrice, na.rm = TRUE), 1),
+    SalePrice_median  = round(mean(SalePrice, na.rm = TRUE), 3),
+    .groups = "drop"
+  )
+```
+
+Porque `cut()` clasifica según el valor numérico y no según la posición de la observación.
+
+
+**Diferencia fundamental**
+
+| Característica | `ntile()` | `cut()` |
+| --- | --- | --- |
+| Divide | Observaciones | Intervalos |
+| Tamaño de grupos | Aproximadamente iguales | Puede variar |
+| Respeta valores repetidos | No necesariamente | Sí |
+| Utiliza límites | Según posiciones | Según valores |
+
+Respuesta que puedes escribir en tu ejercicio:
+
+`ntile()` divide las observaciones en grupos de tamaños aproximadamente iguales según su posición después de ordenarlas. Por eso, dos viviendas con la misma edad pueden quedar en grupos diferentes si se encuentran en el límite entre dos grupos. En cambio, `cut()` divide los datos en intervalos numéricos, por lo que todas las viviendas que tengan la misma edad pertenecerán al mismo intervalo.
+
+## Ejercicio 2: ¿qué es un outlier en fare? 
+
+Dificultad: media. Dataset: titanic.csv.
+
+Aplique el criterio IQR global sobre fare con k = 1.5 y con k = 3. ¿Qué porcentaje de pasajeros marca cada uno?
+
+```{r}
+titanic <- read.csv("/media/dave7177/Nuevo vol/1 Full Dave/SUBJECTS/X-CURRENT-2026-2/Mineria/Repo/dm_2016325_2026_2/sergio_david_calderon_cuadrado/bases/titanic.csv")
+```
+
+
+```{r}
+umbral_cols <- 0.50  # eliminar si > 50% NA
+titanic_limpio <- titanic |>
+  select(where(~ mean(is.na(.x)) <= umbral_cols))
+cat("Columnas antes:", ncol(titanic), "\n")
+titanic_limpio <- titanic_limpio |>
+  mutate(
+    age_imp = if_else(
+      is.na(age),
+      median(age, na.rm = TRUE),
+      age
+    )
+  )
+head(titanic_limpio)
+dim(titanic_limpio)
+```
+
+
+```{r}
+titanic_limpio <- titanic_limpio |>
+  mutate(titulo = str_extract(name, "(?<=, )[A-Za-z]+(?=\\.)")) |>
+  group_by(titulo) |>
+  mutate(
+    age_grupo = if_else(
+      is.na(age),
+      median(age, na.rm = TRUE),
+      age
+    )
+  ) |>
+  ungroup()
+tail(titanic_limpio)
+dim(titanic_limpio)
+```
+
+
+```{r}
+titanic_limpio |>
+  group_by(titulo) |>
+  summarise(
+    mediana_grupo = round(median(age, na.rm = TRUE), 1),
+    n_imputados   = sum(is.na(age)),
+    .groups = "drop"
+  ) |>
+  filter(!is.na(mediana_grupo)) |>
+  arrange(desc(n_imputados))
+head(titanic_limpio)
+dim(titanic_limpio)
+```
+
+
+```{r}
+moda <- function(x) {
+  ux <- unique(x[!is.na(x)])
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+titanic_limpio <- titanic_limpio |>
+  mutate(
+    embarked_imp = if_else(is.na(embarked), moda(embarked), embarked)
+  )
+head(titanic_limpio)
+dim(titanic_limpio)
+```
+
+Repita el criterio IQR dentro de cada pclass (con .by = pclass). ¿Cuántos pasajeros de primera clase dejan de ser outliers? 
+
+```{r}
+# k = 1.5
+# k = 3
+detectar_outliers_iqr <- function(x, k = 3) {
+  q1  <- quantile(x, 0.25, na.rm = TRUE)
+  q3  <- quantile(x, 0.75, na.rm = TRUE)
+  iqr <- q3 - q1
+  x < (q1 - k * iqr) | x > (q3 + k * iqr)
+}
+
+# detectar_outliers_iqr(titanic_limpio$age)
+titanic_limpio <- titanic_limpio |>
+  mutate( outlier_fare = detectar_outliers_iqr(fare)  )
+head(titanic_limpio)
+dim(titanic_limpio)
+cat("Outliers en fare:", sum(titanic_limpio$outlier_fare, na.rm = TRUE), "\n")
+
+#  .by: filtro con estadística grupal, sin necesidad de group_by()
+#   cuenta solo pasajeros cuya tarifa es considerada atipica en su clase
+titanic_limpio |>
+  filter(detectar_outliers_iqr(fare), .by = pclass) |>
+  count(pclass)
+```
+
+¿Por qué comparar una tarifa de primera clase con la distribución global puede ser injusto?
+
+Porque las tarifas de primera clase suelen ser más elevadas que las de segunda y tercera. Compararlas con una distribución global puede marcar como atípicas tarifas que son normales dentro de primera clase.
+
+Implemente el z-score robusto, (x - median(x)) / mad(x), y marque como outlier si su valor absoluto supera 3.5. Explique qué ventaja tiene sobre el z-score clásico cuando hay valores extremos.
+
+```{r}
+zscore <- function(x) (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
+zscore_robust <- function(x) (x - median(x, na.rm = TRUE)) / mad(x, na.rm = TRUE)
+
+titanic_limpio <- titanic_limpio |>
+  mutate(
+    z_fare = zscore(fare),
+    outlier_z_fare = abs(z_fare) > 3,
+    z_fare_rob = zscore_robust(fare),
+    outlier_z_fare_rob = abs(z_fare_rob) > 3.5
+  )
+
+cat("Outliers por Z-score (|z|>3) en fare:",
+    sum(titanic_limpio$outlier_z_fare, na.rm = TRUE), "\n")
+cat("Outliers robusto por Z-score (|z|>3.5) en fare:",
+    sum(titanic_limpio$outlier_z_fare_rob, na.rm = TRUE), "\n")
+
+head(titanic_limpio)
+dim(titanic_limpio)
+```
+
+la ventaja que tiene el z-score clásico cuando hay valores extremos es que son mucho menos que los del metodo robusto.
+
+Construya una tabla que cruce los tres criterios (global, por clase y z-score robusto) con count() sobre las tres banderas. ¿Qué pasajeros marca un criterio pero no los otros?
+
+```{r}
+titanic_limpio |>
+  filter(pclass == 1) |>
+  summarise(
+    dejan_de_ser_outliers = sum(
+      outlier_fare & !outlier_z_fare,
+      na.rm = TRUE
+    )
+  )
+```
+
+Primero crea una bandera para IQR por clase
+
+```{r}
+titanic_limpio |>
+  count(
+    outlier_fare,
+    outlier_z_fare,
+    outlier_z_fare_rob
+  )
+```
+
+Para identificar pasajeros que un criterio marca y otros no
+
+```{r}
+titanic_limpio |>
+  filter(
+    outlier_fare != outlier_z_fare |
+    outlier_fare != outlier_z_fare_rob |
+    outlier_z_fare != outlier_z_fare_rob
+  ) |>
+  select(name, pclass, fare,
+         outlier_fare,
+         outlier_z_fare,
+         outlier_z_fare_rob)
+```
+
+
+Revise los 17 pasajeros con fare == 0. ¿Son outliers, errores o faltantes disfrazados? Proponga y justifique un tratamiento (mantener, convertir a NA o imputar).
+
+```{r}
+titanic_limpio |> filter(fare == 0)
+```
+
+Mantendría los valores de tarifa cero porque pueden representar viajes gratuitos o situaciones especiales. No existe evidencia suficiente para considerarlos errores o valores faltantes disfrazados. Por tanto, eliminarlos o imputarlos podría introducir un sesgo en los datos.
+
+Aplique log1p(fare) y repita el criterio IQR. ¿Cuántos outliers quedan? Discuta si transformar resuelve el problema de los valores extremos o solo lo oculta.
+
+```{r}
+titanic_limpio <- titanic_limpio |>
+  mutate(
+    # Winsorización: recortar en percentiles 5 y 95
+    fare_winsor = pmin(pmax(fare,
+                            quantile(fare, 0.05, na.rm = TRUE)),
+                       quantile(fare, 0.95, na.rm = TRUE)),
+
+    # Transformación logarítmica: comprime la escala de valores extremos
+    fare_log    = log1p(fare)
+  )
+
+titanic_limpio |>
+  summarise(
+    outliers_log = sum(
+      detectar_outliers_iqr(fare_log),
+      na.rm = TRUE
+    )
+  )
+
+titanic_limpio |>
+  summarise(
+    outliers_original = sum(
+      detectar_outliers_iqr(fare),
+      na.rm = TRUE
+    ),
+    outliers_log = sum(
+      detectar_outliers_iqr(fare_log),
+      na.rm = TRUE
+    )
+  )
+```
+
+
+La transformación logarítmica no elimina los valores extremos ni los oculta. Modifica la escala de los datos, comprimiendo las diferencias entre tarifas elevadas. Esto puede reducir la cantidad de valores identificados como outliers.
+
+La winsorización sí modifica los valores originales de la variable transformada, aunque conserva el número de observaciones.
+
+## Ejercicio 3: ¿qué estrategia de imputación se equivoca menos? 
+
+Dificultad: alta. Dataset: titanic.csv.
+
+Imputar sin poder validar es un acto de fe. Aquí se evalúa cuál estrategia reconstruye mejor age ocultando edades que sí se conocen.
+
+Con set.seed(2024), tome los 1046 pasajeros con age conocida y oculte el 20 % al azar. Guarde la edad verdadera en age_real.
+
+```{r}
+set.seed(2024)
+
+```
+
+
+Impute las edades ocultas con tres estrategias: (1) mediana global, (2) mediana por pclass y sex, (3) mediana por título social (Mr, Mrs, Miss, Master y Otro). Las medianas deben calcularse solo con las edades no ocultas; usar las ocultas es fuga de información.
+
+Calcule el error absoluto medio (MAE) y la raíz del error cuadrático medio (RMSE) de cada estrategia. ¿Cuál gana?
+
+Encapsule (a) a (c) en una función simular_imputacion(semilla) y repítala 200 veces con purrr::map(). Grafique la distribución del MAE por estrategia. ¿La estrategia ganadora en (c) gana siempre? Calcule en qué porcentaje de las repeticiones.
+
+Compare la desviación estándar de age tras imputar con la de las edades verdaderas. ¿Qué le ocurre a la variabilidad cuando se imputa con una mediana? ¿Qué consecuencia tiene para un modelo que use esa variable?
+
+(Python) Escriba la estrategia 2 con groupby().transform("median") y verifique que produce los mismos valores que en R.
+
+```{r}
+
+```
+
+## Ejercicio 4: escalado, outliers y fuga de información 
+
+Dificultad: alta. Dataset: mobile_data.csv.
+
+Escriba una función escalar(df, cols, metodo = c("minmax", "zscore", "robusto")) que use match.arg() y devuelva un data frame solo con las columnas escaladas. El método robusto es (x - mediana) / IQR.
+
+Tome los teléfonos de las filas 1 y 2 y las variables ram, battery_power, int_memory, px_height y px_width. Calcule el porcentaje que aporta cada variable a la distancia euclidiana al cuadrado entre ambos, antes de escalar y después de cada método. ¿Qué variable domina sin escalar? ¿Cómo cambia el reparto?
+
+Cree una copia del dataset con ram\[1\] \<- 100000. Escale con los tres métodos y calcule la desviación estándar de ram en las 2999 filas restantes. ¿Qué método colapsa a las demás observaciones y por qué?
+
+Fuga de información. Con set.seed(2024), divida el dataset en entrenamiento (70 %) y prueba (30 %). Estime el mínimo y el máximo solo con entrenamiento, escale la prueba con esos parámetros y cuente cuántos valores de prueba quedan fuera de \[0, 1\]. Luego escale todo el dataset junto y explique por qué eso es fuga de información aunque nunca se use price_range.
+
+(Python) Reproduzca (d) con train_test_split y MinMaxScaler, ajustando el escalador (fit) únicamente con entrenamiento. Compare el porcentaje de valores fuera de \[0, 1\] con el obtenido en R.
+
+```{r}
+
+```
+
+## Ejercicio 5: pipeline funcional y reutilizable 
+
+Dificultad: alta. Dataset: adult.csv.
+
+Construya un pipeline que deje adult.csv listo para modelar y que se pueda aplicar a datos nuevos.
+
+Reemplace "?" por NA (recuerde str_trim()). Compare la proporción de income == "\>50K" entre las personas con occupation faltante y las demás, y pruebe la diferencia con prop.test(). ¿Es razonable suponer que el faltante es completamente aleatorio? ¿Qué implica esto para elegir entre imputar con la moda o crear la categoría "Desconocido"?
+
+capital.gain contiene un valor centinela. Cuente las filas con el valor 99999 y compárelo con el siguiente valor más alto. Además, más del 90 % de las filas valen 0. Decida cómo tratar la variable (bandera más NA, winsorización, transformación logarítmica) y justifique.
+
+Escriba una función por paso: limpiar_signos(), tratar_centinela(), agrupar_paises() (que deje native.country en "Estados Unidos" y "Otro"), imputar(), transformar_log(), codificar() (one-hot de workclass, marital.status y sex, y income binaria) y estandarizar().
+
+Componga los pasos con purrr::reduce() sobre una lista de funciones en una sola función preprocesar_adult(df). Incluya verificaciones con stopifnot(): sin NA, todas las columnas numéricas y el mismo número de filas que la entrada.
+
+Para aplicar el pipeline a datos nuevos hay que guardar parámetros del entrenamiento. ¿Cuáles (medianas, medias, desviaciones, niveles de los factores)? Modifique imputar(), codificar() y estandarizar() para que los reciban en lugar de recalcularlos, y pruebe el pipeline con una partición 70/30.
+
+(Python) Construya el equivalente con Pipeline y ColumnTransformer (SimpleImputer, OneHotEncoder(handle_unknown="ignore") y StandardScaler). Explique por qué fit se ejecuta solo con entrenamiento y por qué handle_unknown="ignore" es necesario.
+
+```{r}
+
+```
+
+## Ejercicio 6 (reto opcional): texto, fechas y columnas anidadas 
+
+Dificultad: alta. Dataset: netflix_titles.csv.
+
+Hay tres filas en las que duration es NA y rating contiene un valor como "74 min": los datos quedaron en la columna equivocada. Detéctelas con str_detect() y corríjalas.
+
+Separe duration en duracion_valor (numérico) y duracion_unidad ("min" o "temporadas") con stringr. ¿Por qué no tiene sentido una duración promedio de todo el catálogo? Calcule el promedio correcto por type.
+
+Convierta date_added a fecha. Tenga cuidado: as.Date(x, "%B %d, %Y") depende del idioma del sistema y falla en un R en español; use readr::parse_date() con locale = locale("en"). Calcule el rezago entre el año de date_added y release_year. ¿Hay valores negativos? Explique qué pueden significar.
+
+listed_in guarda varios géneros separados por coma. Con separate_longer_delim() obtenga los 10 géneros más frecuentes por type. Compare el número de filas antes y después, y explique por qué no se puede sumar el resultado para contar títulos.
+
+country incluye varios países en muchas filas y tiene faltantes. Cree n_paises y una bandera coproduccion. ¿Conviene imputar "Desconocido" o dejar NA? Justifique según el uso que se le daría a la variable.
+
+```{r}
+
+```
+
