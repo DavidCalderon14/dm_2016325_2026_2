@@ -1,0 +1,763 @@
+---
+title: "Practica 4"
+output: html_document
+date: "2026-09-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+url_chinook <- "https://raw.githubusercontent.com/lerocha/chinook-database/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite"
+ruta_db     <- "chinook.db"
+
+if (!file.exists(ruta_db)) {
+  download.file(url_chinook, destfile = ruta_db, mode = "wb")
+  cat("Base de datos descargada en:", ruta_db, "\n")
+} else {
+  cat("La base de datos ya existe:", ruta_db, "\n")
+}
+
+# Instalamos los paquetes necesarios
+paquetes  <- c("DBI", "RSQLite", "dplyr", "knitr")
+instalados <- rownames(installed.packages())
+pendientes <- setdiff(paquetes, instalados)
+if (length(pendientes) > 0) install.packages(pendientes)
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+# Abrimos la conexión
+con <- dbConnect(RSQLite::SQLite(), "chinook.db")
+cat("Conexión establecida.\n")
+```
+
+```{r}
+dbListTables(con)
+```
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT t.Name                              AS pista,
+         g.Name                              AS genero,
+         ROUND(t.Milliseconds / 60000.0, 2) AS duracion_min,
+         t.UnitPrice                         AS precio
+  FROM   Track  t
+  INNER JOIN Genre g ON t.GenreId = g.GenreId
+  LIMIT  10;
+")
+resultado
+```
+
+## JOIN múltiple: pista, álbum y artista -->
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT ar.Name  AS artista,
+         al.Title AS album,
+         t.Name   AS pista,
+         g.Name   AS genero
+  FROM        Track   t
+  INNER JOIN  Album   al ON t.AlbumId  = al.AlbumId
+  INNER JOIN  Artist  ar ON al.ArtistId = ar.ArtistId
+  INNER JOIN  Genre   g  ON t.GenreId  = g.GenreId
+  LIMIT 10;
+")
+resultado
+```
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT ar.Name   AS artista,
+         al.Title  AS album
+  FROM   Artist ar
+  LEFT JOIN Album al ON ar.ArtistId = al.ArtistId
+  WHERE  al.AlbumId IS NULL   -- artistas sin álbum registrado
+  LIMIT  10;
+")
+resultado
+```
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT   ar.Name        AS artista,
+           COUNT(al.AlbumId) AS n_albums
+  FROM     Artist ar
+  LEFT JOIN Album al ON ar.ArtistId = al.ArtistId
+  GROUP BY ar.ArtistId, ar.Name
+  ORDER BY n_albums DESC
+  LIMIT    15;
+")
+resultado
+```
+
+```{r}
+# SQLite no tiene RIGHT JOIN: se invierte el orden de las tablas con LEFT JOIN
+resultado <- dbGetQuery(con, "
+  SELECT al.Title  AS album,
+         ar.Name   AS artista
+  FROM   Album  al
+  LEFT JOIN Artist ar ON al.ArtistId = ar.ArtistId
+  LIMIT  10;
+")
+resultado
+```
+
+## FULL OUTER JOIN: simulación en SQLite
+
+```{r}
+# SQLite no tiene FULL OUTER JOIN:
+# se simula con LEFT JOIN + UNION ALL + LEFT JOIN invertido
+resultado <- dbGetQuery(con, "
+  SELECT ar.Name  AS artista,
+         al.Title AS album
+  FROM   Artist ar
+  LEFT JOIN Album al ON ar.ArtistId = al.ArtistId
+
+  UNION ALL
+
+  SELECT ar.Name  AS artista,
+         al.Title AS album
+  FROM   Album al
+  LEFT JOIN Artist ar ON al.ArtistId = ar.ArtistId
+  WHERE  ar.ArtistId IS NULL
+  LIMIT  15;
+")
+resultado
+```
+
+## 1.4 CROSS JOIN
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT g.Name  AS genero,
+         m.Name  AS tipo_medio
+  FROM   Genre     g
+  CROSS JOIN MediaType m
+  ORDER BY g.Name, m.Name
+  LIMIT  15;
+")
+resultado
+```
+
+# 1.5 SELF JOIN
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT e.FirstName || ' ' || e.LastName   AS empleado,
+         e.Title                             AS cargo,
+         m.FirstName || ' ' || m.LastName   AS supervisor
+  FROM   Employee e
+  LEFT JOIN Employee m ON e.ReportsTo = m.EmployeeId
+  ORDER BY supervisor, empleado;
+")
+resultado
+```
+
+# 2. Operadores de conjunto
+
+**UNION**, sin duplicados
+
+**UNION ALL**, con duplicados
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT FirstName || ' ' || LastName AS cliente, Country AS pais
+  FROM   Customer
+  WHERE  Country = 'Brazil'
+
+  UNION ALL
+
+  SELECT FirstName || ' ' || LastName, Country
+  FROM   Customer
+  WHERE  Country = 'Canada'
+  ORDER BY pais, cliente;
+")
+resultado
+```
+
+# 2.2 INTERSECT
+
+aparece en ambos
+
+```{r}
+resultado <- dbGetQuery(con, "
+  -- Géneros que aparecen en MediaTypeId = 1
+  SELECT DISTINCT GenreId FROM Track WHERE MediaTypeId = 1
+
+  INTERSECT
+
+  -- Géneros que también aparecen en MediaTypeId = 2
+  SELECT DISTINCT GenreId FROM Track WHERE MediaTypeId = 2;
+")
+resultado
+```
+
+# 2.3 EXCEPT
+
+está en el primero y no en el segundo
+
+```{r}
+resultado <- dbGetQuery(con, "
+  -- Todos los artistas con al menos un álbum
+  SELECT DISTINCT al.ArtistId
+  FROM   Album al
+
+  EXCEPT
+
+  -- Artistas cuyas pistas aparecen en alguna factura
+  SELECT DISTINCT al.ArtistId
+  FROM   Album       al
+  JOIN   Track       t  ON al.AlbumId    = t.AlbumId
+  JOIN   InvoiceLine il ON t.TrackId     = il.TrackId
+  LIMIT  10;
+")
+resultado
+```
+
+# 3. Subconsultas
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT Name        AS pista,
+         UnitPrice   AS precio
+  FROM   Track
+  WHERE  UnitPrice > (SELECT AVG(UnitPrice) FROM Track)
+  ORDER  BY UnitPrice DESC
+  LIMIT  10;
+")
+resultado
+```
+
+# 3.2 Tabla derivada en FROM
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT pais,
+         ROUND(AVG(total_cliente), 2) AS gasto_medio_por_cliente,
+         COUNT(*)                     AS n_clientes
+  FROM (
+    SELECT c.Country          AS pais,
+           SUM(i.Total)       AS total_cliente
+    FROM   Customer c
+    JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+    GROUP BY c.CustomerId, c.Country
+  ) resumen
+  GROUP BY pais
+  ORDER BY gasto_medio_por_cliente DESC
+  LIMIT  10;
+")
+resultado
+```
+
+
+## 3.3 Subconsulta correlacionada
+
+Clientes que gastaron más que el promedio de su país
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT c.FirstName || ' ' || c.LastName AS cliente,
+         c.Country                         AS pais,
+         ROUND(SUM(i.Total), 2)            AS gasto_total
+  FROM   Customer c
+  JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+  GROUP BY c.CustomerId
+  HAVING SUM(i.Total) > (
+    -- promedio de gasto de los clientes del mismo país
+    SELECT AVG(sub_total)
+    FROM (
+      SELECT SUM(i2.Total) AS sub_total
+      FROM   Customer c2
+      JOIN   Invoice  i2 ON c2.CustomerId = i2.CustomerId
+      WHERE  c2.Country = c.Country
+      GROUP BY c2.CustomerId
+    )
+  )
+  ORDER BY pais, gasto_total DESC;
+")
+resultado
+# having: excluir grupos que NO cumplen con la condicion
+```
+
+## 4. CTEs: Common Table Expressions (WITH)
+
+es como un subconjunto de datos pero no los guarda en memoria.
+Una CTE (expresión de tabla común) nombra una subconsulta para reutilizarla dentro de la misma consulta. Hace el código más legible, permite encadenar pasos de transformación y evita repetir subconsultas.
+
+### 4.1 CTE simple
+
+Top 5 clientes por gasto total
+
+```{r}
+# primero crea el subconjunto, luego lo usa para ordenar y obtener info
+resultado <- dbGetQuery(con, "
+  WITH gasto_cliente AS (
+    SELECT c.CustomerId,
+           c.FirstName || ' ' || c.LastName AS cliente,
+           c.Country,
+           ROUND(SUM(i.Total), 2)           AS gasto_total
+    FROM   Customer c
+    JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+    GROUP BY c.CustomerId
+  ) 
+  SELECT cliente, Country AS pais, gasto_total
+  FROM   gasto_cliente
+  ORDER  BY gasto_total DESC
+  LIMIT  10;
+")
+resultado
+```
+
+### 4.2 CTEs encadenadas
+
+Géneros con más ingresos, comparados contra el promedio general
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_por_genero AS (
+    SELECT   g.Name             AS genero,
+             SUM(il.UnitPrice * il.Quantity) AS ingresos
+    FROM     InvoiceLine il
+    JOIN     Track  t  ON il.TrackId  = t.TrackId
+    JOIN     Genre  g  ON t.GenreId   = g.GenreId
+    GROUP BY g.Name
+  ),
+  promedio_global AS (
+    SELECT AVG(ingresos) AS media_ingresos
+    FROM   ventas_por_genero
+  )
+  SELECT v.genero,
+         ROUND(v.ingresos, 2)      AS ingresos,
+         ROUND(p.media_ingresos, 2) AS media_global,
+         CASE
+           WHEN v.ingresos > p.media_ingresos THEN 'sobre promedio'
+           ELSE 'bajo promedio'
+         END AS desempeno
+  FROM ventas_por_genero v, promedio_global p
+  ORDER BY ingresos DESC;
+")
+resultado
+```
+
+## 5. Funciones de ventana: OVER y PARTITION BY
+
+calculo por fila sin tener que colapsar (como si lo Group By). Permiten calcular rankings, totales acumulados, diferencias entre filas y percentiles dentro de grupos.
+
+ventana: **conjunto de filas relacionadas**
+
+### 5.1 ROW_NUMBER: numeración de filas
+
+Ranking de pistas por duración dentro de cada género
+
+primero organiza todos por genero y luego hace el ranking en cada grupo
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT g.Name                              AS genero,
+         t.Name                              AS pista,
+         ROUND(t.Milliseconds/60000.0, 2)   AS duracion_min,
+         ROW_NUMBER() OVER (
+           PARTITION BY t.GenreId
+           ORDER BY     t.Milliseconds DESC
+         ) AS ranking_duracion
+  FROM   Track t
+  JOIN   Genre g ON t.GenreId = g.GenreId
+  ORDER  BY genero, ranking_duracion
+  LIMIT  15;
+")
+resultado
+```
+
+
+## 5.2 RANK y DENSE_RANK
+
+`RANK()` deja huecos cuando hay empate (1, 2, 2, 4…); 
+`DENSE_RANK()` no los deja (1, 2, 2, 3…).
+
+Ranking de clientes por gasto total
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH gasto AS (
+    SELECT c.FirstName || ' ' || c.LastName AS cliente,
+           c.Country,
+           ROUND(SUM(i.Total), 2)           AS gasto_total
+    FROM   Customer c
+    JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+    GROUP BY c.CustomerId
+  )
+  SELECT cliente,
+         Country                                        AS pais,
+         gasto_total,
+         RANK()       OVER (ORDER BY gasto_total DESC) AS rank_con_huecos,
+         DENSE_RANK() OVER (ORDER BY gasto_total DESC) AS rank_sin_huecos
+  FROM   gasto
+  ORDER  BY gasto_total DESC;
+  
+")
+resultado
+```
+
+## 5.3 NTILE: cuartiles y percentiles
+
+`NTILE(n)` divide las filas en n grupos de igual tamaño. 
+`NTILE(4)` genera cuartiles; 
+`NTILE(10)` genera deciles.
+
+coloca a cada una de las filas en el cuartil o decil correspondiente, el `ORDER  BY` es obligatorio
+`OVER` mirando hacia a tras o todo completo
+Cuartiles de gasto entre clientes
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH gasto AS (
+    SELECT c.FirstName || ' ' || c.LastName AS cliente,
+           ROUND(SUM(i.Total), 2)           AS gasto_total
+    FROM   Customer c
+    JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+    GROUP BY c.CustomerId
+  )
+  SELECT cliente,
+         gasto_total,
+         NTILE(4) OVER (ORDER BY gasto_total) AS cuartil
+  FROM   gasto
+  ORDER  BY cuartil, gasto_total DESC
+  LIMIT  16;
+")
+resultado
+```
+
+## 5.4 LAG y LEAD: comparación entre filas
+
+`LAG(col, n)` accede al valor de la fila n posiciones antes; 
+`LEAD(col, n)` accede al valor n posiciones después. 
+
+Son ideales para calcular variaciones período a período.
+
+Ventas mensuales y variación respecto al mes anterior. Ed compara las ventas de un mes anterior.
+***se debe crear pero no se puede utilizar ahi mismo, se debe recalcular para utilizarlo***.
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_mes AS (
+    SELECT SUBSTR(InvoiceDate, 1, 7)  AS anio_mes,
+           ROUND(SUM(Total), 2)       AS ventas
+    FROM   Invoice
+    GROUP BY anio_mes
+  )
+  SELECT anio_mes,
+         ventas,
+         LAG(ventas, 1) OVER (ORDER BY anio_mes)  AS ventas_mes_anterior,
+         ROUND(ventas - LAG(ventas, 1) OVER (ORDER BY anio_mes),2) AS variacion_absoluta
+  FROM   ventas_mes
+  ORDER  BY anio_mes
+  LIMIT  15;
+")
+resultado
+# 
+```
+
+## 5.5 SUM / AVG acumulados con OVER
+
+Cuando se usa `SUM() OVER (ORDER BY ...) sin PARTITION BY`, el resultado es un total **acumulado** (running total). 
+Con `PARTITION BY` el acumulado se **reinicia en cada grupo**.
+
+Total acumulado de ventas por mes
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_mes AS (
+    SELECT SUBSTR(InvoiceDate, 1, 7) AS anio_mes,
+           ROUND(SUM(Total), 2)      AS ventas
+    FROM   Invoice
+    GROUP BY anio_mes
+  )
+  SELECT anio_mes,
+         ventas,
+         ROUND(SUM(ventas) OVER (ORDER BY anio_mes), 2) AS ventas_acumuladas,
+         ROUND(AVG(ventas) OVER (ORDER BY anio_mes ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) 
+         AS media_movil_3m
+  FROM   ventas_mes
+  ORDER  BY anio_mes;
+")
+resultado
+```
+
+considerando por id
+
+```{r}
+dbListFields(con, "Invoice")
+```
+
+**ejemplo MIO**
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_mes AS (
+    SELECT SUBSTR(InvoiceDate, 1, 7) AS anio_mes,
+           ROUND(SUM(Total), 2)      AS ventas,
+           CustomerId AS ID_cliente
+    FROM   Invoice
+    GROUP BY anio_mes
+  )
+  SELECT anio_mes,
+         ventas,
+         ID_cliente, 
+         ROUND(SUM(ventas) OVER (ORDER BY anio_mes), 2) AS ventas_acumuladas,
+         ROUND(AVG(ventas) OVER (PARTITION BY ID_cliente ORDER BY anio_mes ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS media_movil_3m_cliente,
+         ROUND(AVG(ventas) OVER (ORDER BY anio_mes ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) 
+         AS media_movil_3m
+  FROM   ventas_mes
+  ORDER  BY anio_mes
+  LIMIT  15;
+")
+resultado
+```
+
+# 6. Análisis descriptivo completo
+
+Integramos JOINs, CTEs y funciones de ventana para construir un reporte analítico de ventas por país: participación de mercado, ranking y cuartil de cada país.
+
+Reporte de ventas por país con ranking y participación
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_pais AS (
+    SELECT   BillingCountry             AS pais,
+             COUNT(*)                   AS n_facturas,
+             ROUND(SUM(Total), 2)       AS total_ventas,
+             ROUND(AVG(Total), 2)       AS ticket_medio
+    FROM     Invoice
+    GROUP BY BillingCountry
+  ),
+  totales AS (
+    SELECT SUM(total_ventas) AS gran_total
+    FROM   ventas_pais
+  )
+  SELECT
+    vp.pais,
+    vp.n_facturas,
+    vp.total_ventas,
+    vp.ticket_medio,
+    ROUND(100.0 * vp.total_ventas / t.gran_total, 2) AS pct_mercado,
+    RANK()   OVER (ORDER BY vp.total_ventas DESC)    AS ranking,
+    NTILE(4) OVER (ORDER BY vp.total_ventas)         AS cuartil
+  FROM   ventas_pais vp, totales t
+  ORDER  BY ranking
+  LIMIT  15;
+")
+resultado
+```
+
+## Taller
+
+### Ejercicio 1: 
+
+JOINs avanzados, subconsultas correlacionadas y operadores de conjunto
+
+```{r}
+dbListTables(con)
+```
+
+
+```{r}
+dbListFields(con, "Customer")
+dbListFields(con, "Employee")
+dbListFields(con, "InvoiceLine")
+dbListFields(con, "Track")
+dbListFields(con, "Album")
+```
+
+1. Cada cliente tiene un empleado de soporte asignado (Customer.SupportRepId referencia a Employee.EmployeeId), y cada empleado puede tener un jefe (Employee.ReportsTo, que también referencia a Employee.EmployeeId). Escribe una consulta que combine Customer con Employee mediante INNER JOIN y luego una segunda vez la tabla Employee (con alias distinto, es decir un SELF JOIN) para mostrar: nombre del cliente, nombre del empleado de soporte y nombre del jefe de ese empleado. Usa COALESCE para mostrar 'Sin jefe' cuando el empleado no tenga uno registrado.
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT  c.FirstName || ' ' || c.LastName AS name_cliente,
+          e.FirstName || ' ' || e.LastName AS name_empleado,
+          COALESCE(m.FirstName || ' ' || m.LastName, 'SIN JEFE')  AS supervisor
+  FROM        Customer   c
+  INNER JOIN  Employee e ON c.SupportRepId  = e.EmployeeId
+  LEFT JOIN  Employee m ON e.ReportsTo = m.EmployeeId
+  ORDER BY name_cliente, name_empleado, supervisor;
+")
+resultado
+```
+
+2. Con una subconsulta correlacionada, encuentra los clientes cuyo gasto total (SUM(Invoice.Total)) sea mayor al gasto promedio de los demás clientes atendidos por el mismo empleado de soporte (no el promedio general, ni el del país: el de su propio representante).
+
+```{r}
+resultado <- dbGetQuery(con, "
+  SELECT c.FirstName || ' ' || c.LastName AS cliente,
+         c.SupportRepId AS ID_empleado,
+         ROUND(SUM(i.Total), 2)            AS gasto_total
+  FROM   Customer c
+  JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+  GROUP BY c.CustomerId
+  HAVING SUM(i.Total) > (
+    -- promedio de gasto de los clientes por empleado
+    SELECT AVG(sub_total)
+    FROM (
+      SELECT SUM(i2.Total) AS sub_total
+      FROM   Customer c2
+      JOIN   Invoice  i2 ON c2.CustomerId = i2.CustomerId
+      WHERE  c2.SupportRepId = c.SupportRepId
+      GROUP BY c2.CustomerId
+    )
+  )
+  ORDER BY ID_empleado, gasto_total DESC;
+")
+resultado
+```
+
+3. Usando EXCEPT, identifica los empleados que nunca han sido asignados como soporte de ningún cliente (aparecen en Employee pero jamás en Customer.SupportRepId).
+
+```{r}
+resultado <- dbGetQuery(con, "
+  -- Todos los empleados 
+  SELECT DISTINCT e.EmployeeId
+  FROM   Employee e
+
+  EXCEPT
+
+  -- Clientes que han tenido algun tipo de soporte en alguna factura
+  SELECT DISTINCT e.EmployeeId
+  FROM   Employee e
+  JOIN   Customer       c  ON c.SupportRepId = e.EmployeeId
+  LIMIT  10;
+")
+resultado
+```
+
+4. Con una CTE, calcula cuántos clientes atiende cada empleado y el ingreso total generado por esos clientes. Ordena de mayor a menor ingreso e interpreta: ¿el empleado que atiende más clientes es también el que genera más ingresos?
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_por_cliente AS (
+    SELECT   c.CustomerId                     AS ID_cliente,
+             c.SupportRepId                   AS ID_empleado,
+             ROUND(SUM(i.Total), 2)           AS ingreso_total
+    FROM   Customer c
+    JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+    GROUP BY c.CustomerId
+  )
+  SELECT vc.ID_empleado,
+         ROUND(SUM(vc.ingreso_total), 2) AS ingreso_total_clientes
+         COUNT(*)                        AS n_clientes,
+  FROM ventas_por_cliente vc
+  GROUP BY vc.ID_empleado
+  WHERE    vc.ID_empleado = c.SupportRepId
+  ORDER BY ingreso_total_clientes DESC;
+")
+```
+
+# Ejercicio 2: Funciones de ventana y CTEs encadenadas de varios niveles
+
+Usando las tablas Invoice, InvoiceLine, Track y Genre:
+
+```{r}
+
+```
+
+
+1. Calcula el total de ventas por año y mes (SUBSTR(InvoiceDate, 1, 7)). Con LAG y LEAD en la misma fila, agrega tanto las ventas del mes anterior como las del mes siguiente, y calcula la variación porcentual (no absoluta) respecto al mes anterior.
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_mes AS (
+    SELECT SUBSTR(InvoiceDate, 1, 7)  AS anio_mes,
+           ROUND(SUM(Total), 2)       AS ventas
+    FROM   Invoice
+    GROUP BY anio_mes
+  )
+  SELECT anio_mes,
+         ventas,
+         LAG(ventas, 1) OVER (ORDER BY anio_mes)  AS ventas_mes_anterior,
+         ROUND(ventas - LAG(ventas, 1) OVER (ORDER BY anio_mes),2) AS variacion_absoluta_ant,
+         LEAD(ventas, 1) OVER (ORDER BY anio_mes)  AS ventas_mes_despues
+  FROM   ventas_mes
+  ORDER  BY anio_mes
+  LIMIT  15;
+")
+```
+
+
+2. Construye una CTE con las ventas por año y mes, y a partir de ella genera dos rankings con RANK() OVER (PARTITION BY año ORDER BY ventas ...): uno para identificar el mes de mayor venta de cada año y otro para el de menor venta. Muestra en una sola tabla final, por año, el mes top y el mes más bajo.
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_mes AS (
+    SELECT SUBSTR(InvoiceDate, 1, 7)  AS anio_mes,
+           SUBSTR(InvoiceDate, 1, 4)  AS anho,
+           SUBSTR(InvoiceDate, 6, 2)  AS mes,
+           ROUND(SUM(Total), 2)       AS ventas_mes
+    FROM   Invoice
+    GROUP BY anio, mes
+  ),
+  totales AS (
+    SELECT SUM(total_ventas) AS gran_total
+    FROM   ventas_pais
+  )
+  SELECT vc.anho,
+         vc.mes,
+         RANK()   OVER (PARTITION BY vc.anho ORDER BY vp.ventas DESC)    AS ranking_mayor,
+         RANK()   OVER (PARTITION BY vc.anho ORDER BY vp.ventas)    AS ranking_menor
+  FROM ventas_mes vc
+  ORDER  BY ranking
+  LIMIT  15;
+")
+# falta solo mostrar las dos que solicitan
+```
+
+3. Encadena una segunda CTE para calcular, por año, cuál fue el género musical con mayores ingresos (UnitPrice X Quantity vía InvoiceLine → Track → Genre). Usa RANK() OVER (PARTITION BY año ORDER BY ingresos DESC) y filtra solo la posición 1 de cada año con un WHERE sobre el resultado de la CTE.
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH ventas_por_genero AS (
+    SELECT   g.Name             AS genero,
+             SUM(il.UnitPrice * il.Quantity) AS ingresos
+    FROM     InvoiceLine il
+    JOIN     Track  t  ON il.TrackId  = t.TrackId
+    JOIN     Genre  g  ON t.GenreId   = g.GenreId
+    GROUP BY g.Name
+  ) ventas_mes AS (
+    SELECT SUBSTR(InvoiceDate, 1, 7)  AS anio_mes,
+           SUBSTR(InvoiceDate, 1, 4)  AS anho,
+           SUBSTR(InvoiceDate, 6, 2)  AS mes,
+           ROUND(SUM(Total), 2)       AS ventas_mes
+    FROM   Invoice
+    GROUP BY anio, mes
+  )
+  SELECT vg.genero,
+         vm.anho, 
+         RANK() OVER (PARTITION BY vm.anho ORDER BY vg.ingresos)  AS ranking
+  FROM ventas_por_genero vg, ventas_mes vm
+  WHERE c2.Country = c.Country
+  ORDER BY ingresos DESC;
+")
+# filtra solo la posición 1 de cada año con un WHERE sobre el resultado de la CTE
+```
+
+4. Sobre el gasto total por cliente, usa NTILE(4) para dividirlos en cuartiles y luego, con una CTE adicional que agregue por cuartil, calcula qué porcentaje del ingreso total de la tienda representa el cuartil superior (Q4) frente a los otros tres cuartiles combinados.
+
+```{r}
+resultado <- dbGetQuery(con, "
+  WITH gasto AS (
+    SELECT c.FirstName || ' ' || c.LastName AS cliente,
+           ROUND(SUM(i.Total), 2)           AS gasto_total
+    FROM   Customer c
+    JOIN   Invoice  i ON c.CustomerId = i.CustomerId
+    GROUP BY c.CustomerId
+  )
+  SELECT cliente,
+         gasto_total,
+         NTILE(4) OVER (ORDER BY gasto_total) AS cuartil
+  FROM   gasto
+  ORDER  BY cuartil, gasto_total DESC;
+")
+resultado
+```
+
