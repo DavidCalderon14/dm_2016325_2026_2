@@ -1,0 +1,439 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+# Tipo de datos 
+
+## Datos estructurados, no estructurados
+
+Ejemplo: JSON de datos abiertos → tibble
+
+```{r}
+library(jsonlite)
+library(dplyr)
+library(tibble)
+
+json_datos <- '
+[
+  {"municipio": "Bogotá", "año": 2022,
+   "indicadores": {"desempleo": 11.2, "pobreza": 32.1}},
+  {"municipio": "Medellín", "año": 2022,
+   "indicadores": {"desempleo": 9.8, "pobreza": 28.4}},
+  {"municipio": "Cali", "año": 2022,
+   "indicadores": {"desempleo": 13.5, "pobreza": 36.7}},
+  {"municipio": "Barranquilla", "año": 2022,
+   "indicadores": {"desempleo": 10.1, "pobreza": 30.2}}
+]'
+
+datos_raw <- fromJSON(json_datos)
+
+datos_tbl <- as_tibble(datos_raw) |>
+  mutate(
+    desempleo = indicadores$desempleo,
+    pobreza = indicadores$pobreza
+  ) |>
+  select(-indicadores)
+```
+
+***La estructura determina el algoritmo***
+
+## DataFrame
+
+`data.frame`
+`tibble`
+`data.table`
+
+```{r}
+# Vista de los datos
+titanic |>
+  select(survived,
+         pclass,
+
+         sex,
+         age,
+         fare,
+         embarked) |>
+  head(4)
+```
+
+```{r}
+# data.table — misma operación
+
+tit_dt <- titanic |>
+          as.data.table()
+tit_dt[, .(survived,
+           pclass,
+           sex,
+           age,
+           fare,
+           embarked)][1:4]
+```
+
+# Matrices
+
+## Matriz numérica
+
+```{r}
+# Paso 1: separar predictores (X) de variable respuesta (y)
+datos_modelo <- titanic |>
+  select(survived, pclass, age, fare, sibsp, parch) |>
+  na.omit()
+
+y <- datos_modelo$survived          # vector respuesta — fuera de X
+X <- datos_modelo |>
+  select(-survived) |>
+  as.matrix()
+```
+
+```{r}
+# Paso 2: centrar y escalar antes de X'X (requerido para PCA)
+X_scaled <- scale(X)
+# Diagonal de X'X escalada ≈ (n-1) por variable estandarizada
+XtX <- crossprod(X_scaled)
+
+round(diag(XtX)) 
+```
+
+## Matriz dispersa
+
+```{r}
+library(Matrix)
+# Simular DTM: 1.000 docs × 5.000 palabras (~0.1% no-ceros, como una DTM real)
+dtm_densa  <- matrix(rpois(1000 * 5000, 0.001), nrow = 1000)
+dtm_sparse <- Matrix(dtm_densa, sparse = TRUE)
+```
+
+```{r}
+# Estructura interna CSC (dgCMatrix): solo almacena (col, fila, valor)
+str(dtm_sparse)
+```
+
+## Grafos
+
+```{r}
+library(igraph)
+library(tidygraph)
+library(networkx)
+```
+
+## Grafos: Red de aeropuertos colombianos
+
+```{r}
+library(igraph); library(dplyr); library(readr)
+
+# Aeropuertos colombianos con código IATA válido
+airports <- read_csv("../../data/airports.csv", show_col_types = FALSE)
+colombia <- airports |>
+  filter(Country == "Colombia", nchar(IATA) == 3, IATA != "\\N") |>
+  transmute(iata = IATA, ciudad = City,
+            lat = Latitude, lon = Longitude)
+
+# Distancia haversine (km) entre dos coordenadas
+haversine <- function(la1, lo1, la2, lo2) {
+  r <- pi / 180; R <- 6371
+  a <- sin((la2-la1)*r/2)^2 +
+       cos(la1*r)*cos(la2*r)*sin((lo2-lo1)*r/2)^2
+  2 * R * asin(sqrt(a))
+}
+
+# Aristas: pares de aeropuertos a < 900 km
+n <- nrow(colombia)
+pares <- expand.grid(i = seq_len(n), j = seq_len(n)) |>
+  filter(i < j) |>
+  mutate(
+    from = colombia$iata[i], to = colombia$iata[j],
+    km   = round(mapply(haversine,
+             colombia$lat[i], colombia$lon[i],
+             colombia$lat[j], colombia$lon[j]))
+  ) |>
+  filter(km < 900)
+
+# Construir grafo
+G_col <- graph_from_data_frame(
+  d        = pares[, c("from","to","km")],
+  directed = FALSE,
+  vertices = colombia |> rename(name = iata)
+)
+```
+
+```{r}
+library(tidygraph); library(ggraph)
+```
+
+## Tensores
+
+```{r}
+array(datos, dim = c(d₁, d₂, …, dₖ))
+```
+
+
+**Imágenes (CNN)**
+
+```{r}
+keras 
+torch
+```
+
+**Series temporales**
+
+```{r}
+forecast 
+torch
+```
+
+**NLP (Transformer)**
+
+```{r}
+text 
+torch
+```
+
+
+```{r}
+# Tensor 3D: 32 ciudades × 12 meses × 5 indicadores
+n_ciudades    <- 32L; n_meses <- 12L; n_ind <- 5L
+panel <- array(
+  rnorm(n_ciudades * n_meses * n_ind, mean = 50, sd = 10),
+  dim      = c(n_ciudades, n_meses, n_ind),
+  dimnames = list(
+    ciudad     = paste0("C", sprintf("%02d", seq_len(n_ciudades))),
+    mes        = month.abb,
+    indicador  = c("PIB","Desempleo","Inflación","Exportaciones","Pobreza")
+  )
+)
+```
+
+## Problemas de Alta Dimensionalidad
+
+Demostración: distancias en alta dimensión
+
+```{r}
+set.seed(2024)
+dimensiones <- c(1, 2, 5, 10, 50, 100, 500, 1000)
+
+resumen <- sapply(dimensiones, function(p) {
+  puntos <- matrix(runif(500 * p), nrow = 500, ncol = p)
+  dists  <- sapply(1:200, function(i)
+    sqrt(sum((puntos[i, ] - puntos[i + 200, ])^2)))
+  c(media = mean(dists), cv = sd(dists) / mean(dists))
+})
+
+data.frame(
+  p          = dimensiones,
+  dist_media = round(resumen["media", ], 4),
+  cv_pct     = round(resumen["cv", ] * 100, 2)   # coeficiente de variación
+)
+```
+
+Sparsity: consecuencia natural de la alta dimensionalidad
+
+```{r}
+Matrix::sparseMatrix (R)
+```
+
+
+```{r}
+library(ggplot2)
+pca      <- prcomp(iris[, 1:4], scale. = TRUE)
+var_expl <- pca$sdev^2 / sum(pca$sdev^2)
+```
+
+# Ejercicios
+
+Ejercicio 1: clasificación de tipos de datos
+
+Para cada fuente de datos, indique: (a) si es estructurada, semi-estructurada o no estructurada; (b) la razón; (c) el paso de preprocesamiento mínimo para convertirla en un tibble analizable.
+
+Microdatos GEIH del DANE (archivo .csv de 300.000 filas)
+Respuesta JSON de la API pública datos.gov.co con indicadores de calidad del aire
+Grabaciones de audio de audiencias judiciales de la Rama Judicial
+Factura electrónica emitida por la DIAN (formato XML)
+Tabla HTML de Wikipedia scrapeada con rvest en las clases 2–3
+
+```{r}
+
+```
+
+Ejercicio 2: JSON anidado a DataFrame
+
+Descargue el siguiente JSON público con datos de usuarios (incluye campos anidados address y company):
+
+Explore la estructura con str(raw). ¿Qué columnas son listas anidadas?
+Aplane el objeto a un tibble con una fila por usuario, extrayendo al menos: name, email, address.city, address.geo.lat, address.geo.lng y company.name.
+¿Qué tipo de dato es esta fuente? ¿Por qué fromJSON no produce directamente un tibble plano?
+
+```{r}
+library(jsonlite); library(dplyr); library(tibble)
+url  <- "https://jsonplaceholder.typicode.com/users"
+raw  <- fromJSON(url)
+```
+
+
+```{r}
+
+```
+
+Ejercicio 3: matriz de diseño
+
+Con titanic.csv y las variables age, fare, sibsp, parch (elimine NA):
+
+Construya X
+ centrada y escalada con scale(). Reporte sus dimensiones y la memoria que ocupa.
+Calcule XTX
+. ¿Qué representa la diagonal cuando X
+ está escalada?
+Construya la versión dispersa con Matrix(X, sparse = TRUE). Compare el tamaño en memoria con object.size(). ¿Tiene sentido usar formato disperso aquí?
+¿Qué estructura de datos usaría para modelar las relaciones familiares entre pasajeros (sibsp, parch)? Justifique.
+
+```{r}
+
+```
+
+Ejercicio 4: concentración de distancias
+
+Replique la demostración de la clase para p∈{1,2,5,10,50,100,500,1000,5000}
+ (use set.seed(42)):
+
+Para cada p
+, genere 500 puntos uniformes en [0,1]p
+ y calcule 200 distancias euclidianas entre pares. Reporte la distancia media y el coeficiente de variación (CV).
+Grafique distancia media y CV vs. p
+ (escala log en x
+) con ggplot2.
+¿A partir de qué p
+ el CV cae por debajo del 5%? ¿Qué implica esto para K-NN?
+Repita el punto 1 usando distancia coseno en lugar de euclidiana. ¿Se concentra igual de rápido?
+
+```{r}
+
+```
+
+Ejercicio 5: PCA y reducción de dimensionalidad
+
+Con las variables numéricas del Titanic escaladas (age, fare, sibsp, parch, pclass):
+
+Aplique PCA con prcomp(..., scale. = TRUE). ¿Cuántos componentes son necesarios para retener ≥ 80% de la varianza? ¿Y para ≥ 95%?
+Grafique el scree plot (varianza acumulada vs. número de componente) con ggplot2.
+Examine los loadings de PC1 y PC2. ¿Qué variables dominan cada componente? Proponga una interpretación en el contexto del Titanic.
+Reto: aplique K-Means (k=2
+) sobre X
+ original y sobre los 2 primeros PCs por separado. Compare los grupos resultantes con la variable survived. ¿En cuál representación los grupos coinciden mejor con la supervivencia?
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
