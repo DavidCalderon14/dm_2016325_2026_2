@@ -720,7 +720,7 @@ Separe duration en duracion_valor (numérico) y duracion_unidad ("min" o "tempor
 
 Convierta date_added a fecha. Tenga cuidado: as.Date(x, "%B %d, %Y") depende del idioma del sistema y falla en un R en español; use readr::parse_date() con locale = locale("en"). Calcule el rezago entre el año de date_added y release_year. ¿Hay valores negativos? Explique qué pueden significar.
 
-listed_in guarda varios géneros separados por coma. Con separate_longer_delim() obtenga los 10 géneros más frecuentes por type. Compare el número de filas antes y después, y explique por qué no se puede sumar el resultado para contar títulos.
+<!-- listed_in guarda varios géneros separados por coma. Con separate_longer_delim() obtenga los 10 géneros más frecuentes por type. Compare el número de filas antes y después, y explique por qué no se puede sumar el resultado para contar títulos. -->
 
 country incluye varios países en muchas filas y tiene faltantes. Cree n_paises y una bandera coproduccion. ¿Conviene imputar "Desconocido" o dejar NA? Justifique según el uso que se le daría a la variable.
 
