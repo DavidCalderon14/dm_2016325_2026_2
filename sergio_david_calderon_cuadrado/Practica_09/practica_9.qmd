@@ -1,0 +1,271 @@
+---
+title: "practica_9"
+format: html
+editor: visual
+---
+
+
+## Ejercicios de práctica
+
+```{r}
+library(tidyverse)
+set.seed(909); n <- 1500
+dias <- seq(as.Date("2025-01-01"), as.Date("2025-12-31"), "day")
+pedidos <- tibble(
+  fecha        = sample(dias, n, replace = TRUE),
+  canal        = sample(c("App", "Web", "Tienda"), n, TRUE,
+                        prob = c(.45, .35, .20)),
+  categoria    = sample(c("Tecnología", "Hogar", "Moda"),
+                        n, replace = TRUE),
+  valor        = round(rlnorm(n, 11.5 + 0.6 *
+                   (categoria == "Tecnología"), 0.6), -2),
+  dias_entrega = rpois(n, lambda = 3) + 1,
+  calificacion = sample(1:5, n, TRUE, prob = c(1, 2, 3, 7, 7))
+)
+head(pedidos)
+```
+
+# Ejercicio 1: tablas de frecuencia
+
+Construye las distribuciones de frecuencia de calificacion y del valor del pedido.
+
+```{r}
+calif <- pedidos |>
+  count(calificacion) |>
+  mutate(pct = 100 * n / sum(n), acum = cumsum(pct))
+calif
+
+valor_pedido <- pedidos |>
+  mutate(rango = cut(valor, c(0, 1e5, 2e5, 4e5, Inf), right = FALSE)) |>
+  count(rango) |>
+  mutate(pct = 100 * n / sum(n), acum = cumsum(pct))
+valor_pedido
+
+summary(pedidos)
+```
+
+
+```{r}
+library(patchwork)
+p1 <- pedidos |>
+  count(calificacion) |>
+  mutate(pct = round(100 * n / sum(n),2), acum = cumsum(pct)) |>
+  ggplot(aes(x = reorder(calificacion, -n), y = n)) +
+  geom_col(fill = "#006DAE") +
+  geom_text(aes(label = pct), vjust = -0.4, size = 4) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.12)), limits = c(0, 650)) +
+  labs(title = "Cantidad por calificacion",
+       x = NULL, y = "Frecuencia") +
+  theme_minimal(base_size = 10)
+
+p2 <- pedidos |>
+  mutate(rango = cut(valor, c(0, 1e5, 2e5, 4e5, Inf), right = FALSE)) |>
+  count(rango) |>
+  ggplot(aes(x = reorder(rango, -n), y = n)) +
+  geom_col(fill = "#006DAE") +
+  geom_text(aes(label = n), vjust = -0.4, size = 4) +
+  # scale_x_continuous(label = c("< 1 mill","1-2 mill","2-4 mill","4 mill >")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.22)), limits = c(0, 620)) +
+  labs(title = "Frecuencia por rango salarial",
+       x = NULL, y = "Frecuencia") +
+  theme_minimal(base_size = 15)
+
+p3 <- pedidos |>
+  ggplot(aes(valor)) +
+  geom_histogram(bins = 7) +
+  # scale_y_continuous(expand = expansion(mult = c(0, 0.22)), limits = c(0, 620)) +
+  labs(title = "Frecuencia por rango salarial",
+       x = NULL, y = "Frecuencia") +
+  theme_minimal(base_size = 15)
+
+p1/p2/p3   # lado a lado
+```
+
+
+¿Qué porcentaje de pedidos tiene calificación de 4 o más? tiene `{r} 35.73 + 34` $\%$
+
+¿Por qué la acumulada tiene sentido para calificacion y no para canal? tiene sentido por calificacion porque se tomaria todas aquellas calificaciones que tuvieron puntuación igual a superior y se sumaria toda estas en un orden especifico, pero si hacemos lo mismo por canal estaria sumando todo sin un orden, dado que la variable es categorica nominal y no ordinal.
+
+Usa cortes de igual ancho: ¿qué intervalo queda casi vacío y por qué? queda casi vacio el rango salarial entre 1 millon dado que este se ubicacion muy pocos datos
+
+# Ejercicio 2: elige el gráfico según la pregunta
+
+Para cada pregunta elige el gráfico con el mapa de decisión, constrúyelo en ggplot2 y justifícalo en una frase.
+
+```{r}
+ventas_mes <- pedidos |>
+  mutate(mes = floor_date(fecha, "month")) |>
+  group_by(mes, canal) |>
+  summarise(ventas = sum(valor), .groups = "drop")
+ventas_mes
+```
+
+¿Qué canal genera más pedidos? 
+
+| Variable	| Gráfico | Decisión |
+|---|---|---|
+|1 variable categorica: canal (tres opciones)| barras apiladas| dado que suma 100% y dice que categoria es mas grande|
+
+```{r}
+library(highcharter)
+pedidos |>
+  count(canal) |>
+  hchart("column", hcaes(x = canal, y = n),
+         name = "ventas") |>
+  hc_title(text = "ventas por canal") |>
+  hc_xAxis(title = list(text = "canal")) |>
+  hc_yAxis(title = list(text = "ventas")) |>
+  hc_colors("#006DAE") |>
+  hc_tooltip(pointFormat = "<b>{point.y}</b> ventas")
+```
+
+***justificación:*** como los pedidos son los registros de la base datos entonces el conteo de registros por la columna de canal me dice cuantos registros hay en cada uno de los canales.
+
+¿Cómo se distribuyen los días de entrega? 
+
+| Variable	| Gráfico | Decisión |
+|---|---|---|
+|1 variable categorica: dias del mes (12 opciones)| barras apiladas| dado que suma 100% y dice que categoria es mas grande|
+
+```{r}
+library(highcharter)
+pedidos |>
+  count(dias_entrega) |>
+  hchart("column", hcaes(x = dias_entrega, y = n),
+         name = "entregas") |>
+  hc_title(text = "entregas por dia") |>
+  hc_xAxis(title = list(text = "dia")) |>
+  hc_yAxis(title = list(text = "entregas")) |>
+  hc_colors("#006DAE") |>
+  hc_tooltip(pointFormat = "<b>{point.y}</b> entregas")
+```
+
+***justificación:*** como los pedidos son los registros de la base datos entonces el conteo de registros por la columna de dias de entrega me dice cuantos registros hay en cada uno de los dias
+
+¿El valor del pedido cambia según la categoría? 
+
+```{r}
+# levels(as.factor(pedidos$categoria))
+```
+
+
+| Variable	| Gráfico | Decisión |
+|---|---|---|
+|1 variable categorica: categoria del producto (3 opciones) y 1 variable numerica: valor| Boxplot por grupo | dado que muestra el comportamiento de los precios en cada categoria|
+
+```{r}
+ggplot(pedidos, aes(x = valor, y = categoria)) +
+  geom_violin(aes(fill = categoria), alpha = 0.6, show.legend = FALSE) +
+  geom_boxplot(width = 0.12, fill = "white") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Distribución de ventas por categoria",
+       x = "Ventas", y = NULL)
+```
+
+***justificación:*** aqui muestra como el valor del pedido cambia segun la categoria se observa que los precios para articulos de tecnologia en general tienen un valor mayor.
+
+# ----
+
+¿Cómo evolucionaron las ventas mensuales por canal?
+
+| Variable	| Gráfico | Decisión |
+|---|---|---|
+|1 variable numerica venta al mes \\
+1 variable categorica del mes \\
+1 variable categorica del canal| grafico de lineas | porque relaciona las tres variables y muestra la evolucion en el mes   |
+
+```{r}
+hchart(ventas_mes, "line", hcaes(x = mes, y = ventas, group = canal),
+       name = "canal") |>
+  hc_title(text = "Ventas mensuales 2025") |>
+  hc_xAxis(type = "datetime") |>
+  hc_yAxis(title = list(text = "Ventas (millones COP)"))
+```
+
+***justificación:*** se observa como evoluciona en cada uno de los canales mensualmente el valor de la venta, se detalla el cambio en cada canal de manera temporal mensual.
+
+
+
+# Ejercicio 3: la forma del valor del pedido
+
+```{r}
+ggplot(pedidos, aes(x = valor / 1000)) +
+  geom_histogram(bins = 30, fill = "#006DAE", color = "white") +
+  geom_vline(xintercept = mean(pedidos$valor) / 1000, colour = "red") +
+  geom_vline(xintercept = median(pedidos$valor) / 1000) +
+  labs(x = "Valor del pedido (miles COP)", y = "Pedidos") # +  scale_x_log10()
+# Repite con bins = 8 y bins = 120; luego agrega scale_x_log10()
+```
+
+Describe forma, centro y cola. 
+
+¿La media es mayor que la mediana? si
+
+¿Qué número de bins muestra mejor la forma? Justifica.
+
+¿Qué cambia con scale_x_log10()? cambia es la escala de la frecuencia de los valores, no es la escala de la variable, sino la forma como se presentan las frecuencias de los valores del precio.
+
+¿Qué medida reportarías a gerencia? 
+Repite por categoria: ¿aparece algo que el histograma global ocultaba?
+
+# Ejercicio 4: color con propósito
+
+```{r}
+desvio_mes <- pedidos |>
+  count(mes = month(fecha)) |>
+  mutate(desvio = n - mean(n))
+ggplot(desvio_mes, aes(factor(mes), desvio, fill = desvio)) +
+  geom_col() +
+  scale_fill_gradient2(low = "#b2182b", mid = "grey90",
+                       high = "#2166ac", midpoint = 0)
+```
+
+¿Por qué aquí conviene una paleta divergente? para comparar y que resalten las diferencias
+
+¿Cuál es la referencia? Define **colores_canal** con nombres y úsalo en dos gráficos distintos. 
+
+¿Tus gráficos se entienden sin distinguir rojo y verde? Pruébalos en Coblis.
+
+subirlo a la **pagina de Coblis**
+Probar las simulaciones de:
+   - Protanopia (dificultad con el rojo).
+   - Deuteranopia (dificultad con el verde).
+   - Tritanopia (dificultad con el azul).
+comprobar que las categorías sigan diferenciándose
+
+# Ejercicio 5: tabla de contingencia y su gráfico
+
+```{r}
+tabla <- table(pedidos$canal, pedidos$categoria)
+round(100 * prop.table(tabla, margin = 1), 1)   # % por fila
+round(100 * prop.table(tabla, margin = 2), 1)   # % por fila
+tabla
+
+
+ggplot(pedidos, aes(x = canal, fill = categoria)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proporción dentro del canal")
+```
+
+¿En qué canal pesa más Tecnología? APP
+
+¿Coincide con las barras al 100%? por filas
+
+Las barras al 100% ocultan cuántos pedidos tiene cada canal: ¿qué gráfico de los retos lo resuelve? Gráfico de Marimekko
+
+Presenta la tabla con kable() y escribe dos frases de interpretación.
+
+# Ejercicio 6: interactividad con criterio
+
+```{r}
+library(highcharter)
+pedidos |>
+  count(categoria, canal) |>
+  hchart("column", hcaes(x = categoria, y = n, group = canal)) |>
+  hc_tooltip(shared = FALSE) |>
+  hc_title(text = "Pedidos por categoría y canal")
+```
+
+Traduce el tooltip y los ejes al español, con separador de miles. 
+Construye la versión en ggplot2: ¿qué gana y qué pierde cada una? 
+¿Cuál usarías en un informe PDF para gerencia y cuál en un dashboard? ¿Por qué?
