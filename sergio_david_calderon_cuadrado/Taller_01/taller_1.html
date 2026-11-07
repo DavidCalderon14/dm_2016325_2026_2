@@ -100,8 +100,7 @@ window.Quarto = {
 
 
 <p>Por medio del presente se realiza una recoleccion de datos mediante web scraping en comercios y farmacias con venta en línea en Colombia. Este análisis permite identificar dónde resulta más económico comprar algunos productos de esta categoria de artiuclos de cuidado personal. Se presentan tres establecimientos de comercio reconocidos y se encuentra el menor precio por unidad de contenido, en alguna de las presentaciones</p>
-<section id="introducción" class="level2">
-<h2 class="anchored" data-anchor-id="introducción">Introducción</h2>
+<!-- ## Introducción -->
 <p><strong>categoría:</strong> Cuidado corporal</p>
 <p>productos seleccionados:</p>
 <ul>
@@ -112,7 +111,6 @@ window.Quarto = {
 </ul>
 <p><strong>Nota:</strong> Excluye productos específicos para manos, pies y bebés. <strong>Aclaracion:</strong> se colocan palabras en singular</p>
 <p>objetivo de comparación:</p>
-</section>
 <section id="fuentes-y-documenteacion-de-especificaciones-de-cada-comercio" class="level2">
 <h2 class="anchored" data-anchor-id="fuentes-y-documenteacion-de-especificaciones-de-cada-comercio">Fuentes y documenteacion de especificaciones de cada comercio</h2>
 <p>se seleccionaron tres comercios con venta en línea en Colombia que ofrecen estos productos de la categoría seleccionada</p>
@@ -288,17 +286,17 @@ window.Quarto = {
 5                           &lt;NA&gt;             0    754586
 6                           &lt;NA&gt;             0   3244787
                                             nombre_original marca_std
-1    Crema corporal LUBRIDERM reparación intensiva (946 gr) LUBRIDERM
+1    Crema corporal LUBRIDERM reparación intensiva (946 ml) LUBRIDERM
 2           Hidratante Corporal Cerave Cara Y Cuerpo 562 Ml      &lt;NA&gt;
 3      Crema corporal LUBRIDERM humectación diaria (946 ml) LUBRIDERM
-4 Crema corporal LUBRIDERM protección solar FPS 15 (946 gr) LUBRIDERM
+4 Crema corporal LUBRIDERM protección solar FPS 15 (946 ml) LUBRIDERM
 5                 Crema corporal LUBRIDERM for men (400 ml) LUBRIDERM
 6                 Crema corporal NIVEA hidratante (1000 ml)     NIVEA
   subcategoria_std medida cantidad_unidad unidades cantidad_total precio_cop
-1   crema_corporal      g             946        1            946      44070
+1   crema_corporal     ml             946        1            946      44070
 2   crema_corporal     ml             562        1            562     134462
 3   crema_corporal     ml             946        1            946      46800
-4   crema_corporal      g             946        1            946      49140
+4   crema_corporal     ml             946        1            946      49140
 5   crema_corporal     ml             400        1            400      50300
 6   crema_corporal     ml            1000        1           1000      49910
   precio_lista_cop es_promocion precio_por_medida       fecha_hora_consulta
@@ -368,33 +366,33 @@ window.Quarto = {
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>  n_productos n_observaciones
-1         226             226</code></pre>
+1         239             462</code></pre>
 </div>
 </div>
 <p>Numero de productos en cada comercio</p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>   comercio n_productos
-1 Farmatodo         119
-2 La Rebaja          40
-3     Éxito          67</code></pre>
+1 Farmatodo         121
+2 La Rebaja          41
+3     Éxito          77</code></pre>
 </div>
 </div>
 <p>Numero de productos dentro de cada comercio y categoria.</p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>    comercio    subcategoria_std n_productos
-1  Farmatodo     aceite_corporal          19
-2  Farmatodo      crema_corporal          66
+1  Farmatodo     aceite_corporal          20
+2  Farmatodo      crema_corporal          67
 3  Farmatodo exfoliante_corporal          29
 4  Farmatodo      otros_corporal           5
 5  La Rebaja     aceite_corporal          12
-6  La Rebaja      crema_corporal          24
+6  La Rebaja      crema_corporal          25
 7  La Rebaja exfoliante_corporal           1
 8  La Rebaja      otros_corporal           3
 9      Éxito     aceite_corporal          18
-10     Éxito      crema_corporal          46
-11     Éxito exfoliante_corporal           2
+10     Éxito      crema_corporal          55
+11     Éxito exfoliante_corporal           3
 12     Éxito      otros_corporal           1</code></pre>
 </div>
 </div>
@@ -424,8 +422,10 @@ window.Quarto = {
 <div class="cell-output cell-output-stdout">
 <pre><code>  codigo_corrida obs_comparables productos_distintos comercios esperadas
 1 20261017230148              26                   9         3        27
+2 20261106221640              26                   9         3        27
   cumple_24
-1         1</code></pre>
+1         1
+2         1</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -436,20 +436,13 @@ window.Quarto = {
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
-<pre><code>  codigo_corrida  comercio                                      nombre_original
-1 20261017230148 La Rebaja          CREMA CORPORAL LUBRIDERM HUMECTACION DIARIA
-2 20261017230148 La Rebaja                      CREMA CORPORAL LUBRIDERM FPS 15
-3 20261017230148 La Rebaja        CREMA CORPORAL LUBRIDERM REPARACIÓN INTENSIVA
-4 20261017230148 La Rebaja                          ACEITE CORPORAL COCO DROGAM
-5 20261017230148 La Rebaja                                       BIO-OIL ACEITE
-6 20261017230148 La Rebaja CICATRICURE GEL FACIAL CORPORAL CICATRICES Y ESTRIAS
-  veces
-1     5
-2     3
-3     3
-4     2
-5     2
-6     2</code></pre>
+<pre><code>  codigo_corrida  comercio                               nombre_original veces
+1 20261017230148 La Rebaja   CREMA CORPORAL LUBRIDERM HUMECTACION DIARIA     5
+2 20261106221640 La Rebaja   CREMA CORPORAL LUBRIDERM HUMECTACION DIARIA     5
+3 20261106221640 La Rebaja CREMA CORPORAL LUBRIDERM REPARACIÓN INTENSIVA     4
+4 20261017230148 La Rebaja               CREMA CORPORAL LUBRIDERM FPS 15     3
+5 20261017230148 La Rebaja CREMA CORPORAL LUBRIDERM REPARACIÓN INTENSIVA     3
+6 20261017230148 La Rebaja                   ACEITE CORPORAL COCO DROGAM     2</code></pre>
 </div>
 </div>
 <p>interpretacion: Si, en una misma ejecucion, por ejemplo la ultima, si se obtuvieron al menos 24 observaciones para comparar, en nuestro caso particular se tiene 27 observaciones 9 por cada comercio. No existen repetidos en el sentido que tienen el mismo producto comparable y comercio dentro de una misma ejecución pero si hay registros repetidos por nombre de producto y comercio en esa ejecución en su mayoria del comercio LaRebaja.</p>
@@ -463,24 +456,24 @@ window.Quarto = {
 <div class="cell-output cell-output-stdout">
 <pre><code>  id_producto                              producto n_comercios precio_min
 1           1   Lubriderm humectación diaria 200 ml           3      27250
-2           2   Lubriderm humectación diaria 400 ml           3      30555
-3           3   Lubriderm humectación diaria 946 ml           3      46800
+2           2   Lubriderm humectación diaria 400 ml           3      41800
+3           3   Lubriderm humectación diaria 946 ml           3      69500
 4           4 Lubriderm humectación delicada 400 ml           3      43500
-5           5 Lubriderm reparación intensiva 946 ml           3      44070
+5           5 Lubriderm reparación intensiva 946 ml           3      50850
 6           6   Lubriderm humectación diaria 120 ml           3      19600
 7           7               Lubriderm FPS 15 200 ml           3      31350
-8           8               Lubriderm FPS 15 400 ml           3      34230
-9           9     Nivea hidratación express 1000 ml           2      41700
+8           8               Lubriderm FPS 15 400 ml           3      50600
+9           9     Nivea hidratación express 1000 ml           2      55600
   precio_max precio_prom comercio_menor_precio
 1      30100       28683                 Éxito
-2      46750       41102                 Éxito
-3      71200       57867                 Éxito
+2      46750       44850                 Éxito
+3      72000       70900             Farmatodo
 4      47100       45750                 Éxito
-5      80600       60490                 Éxito
+5      81150       70867                 Éxito
 6      19650       19617      Éxito, La Rebaja
 7      34900       33550                 Éxito
-8      54900       46977                 Éxito
-9      55950       48825             La Rebaja</code></pre>
+8      54900       52433                 Éxito
+9      55950       55775             La Rebaja</code></pre>
 </div>
 </div>
 <p>interpretacion: el comercio que ofrece el menor precio en casi en todos los productos es el almacen Exito, a excepción de dos productos, en <strong>Lubriderm humectación diaria 120 ml</strong> que tiene empate con LaRebaja y el segundo producto es <strong>Nivea hidratación express 1000 ml</strong> que obtiene un menor precio tambien LaRebaja. Algo que resaltar aqui es que el comercio Farmatodo no participa en ningun producto como de menor precio, es decir, entre estos productos seleccionados de cuidado personal el menos favorable es este.</p>
@@ -492,24 +485,24 @@ window.Quarto = {
 <div class="cell-output cell-output-stdout">
 <pre><code>  id_producto                              producto precio_min precio_max
 1           1   Lubriderm humectación diaria 200 ml      27250      30100
-2           2   Lubriderm humectación diaria 400 ml      30555      46750
-3           3   Lubriderm humectación diaria 946 ml      46800      71200
+2           2   Lubriderm humectación diaria 400 ml      41800      46750
+3           3   Lubriderm humectación diaria 946 ml      69500      72000
 4           4 Lubriderm humectación delicada 400 ml      43500      47100
-5           5 Lubriderm reparación intensiva 946 ml      44070      80600
+5           5 Lubriderm reparación intensiva 946 ml      50850      81150
 6           6   Lubriderm humectación diaria 120 ml      19600      19650
 7           7               Lubriderm FPS 15 200 ml      31350      34900
-8           8               Lubriderm FPS 15 400 ml      34230      54900
-9           9     Nivea hidratación express 1000 ml      41700      55950
+8           8               Lubriderm FPS 15 400 ml      50600      54900
+9           9     Nivea hidratación express 1000 ml      55600      55950
   ahorro_vs_max_cop ahorro_vs_max_pct ahorro_vs_prom_cop ahorro_vs_prom_pct
 1              2850               9.5               1433                5.0
-2             16195              34.6              10547               25.7
-3             24400              34.3              11067               19.1
+2              4950              10.6               3050                6.8
+3              2500               3.5               1400                2.0
 4              3600               7.6               2250                4.9
-5             36530              45.3              16420               27.1
+5             30300              37.3              20017               28.2
 6                50               0.3                 17                0.1
 7              3550              10.2               2200                6.6
-8             20670              37.7              12747               27.1
-9             14250              25.5               7125               14.6</code></pre>
+8              4300               7.8               1833                3.5
+9               350               0.6                175                0.3</code></pre>
 </div>
 </div>
 <p>interpretacion: el ahorro con respecto al maximo valor de los productos comparables de cada presentacion se muestra en la tabla, siendo el de mayor diferencia frente al maximo, la <strong>Lubriderm reparación intensiva 946 ml</strong>, con un valor e <span class="math inline">\(\$36.530\)</span> correspondiente a <span class="math inline">\(45.3\%\)</span>.</p>
@@ -520,27 +513,25 @@ window.Quarto = {
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>  medida                              producto                          linea
-1      g Lubriderm reparación intensiva 946 ml Lubriderm reparación intensiva
-2      g               Lubriderm FPS 15 400 ml               Lubriderm FPS 15
-3      g               Lubriderm FPS 15 200 ml               Lubriderm FPS 15
-4     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
+1     ml Lubriderm reparación intensiva 946 ml Lubriderm reparación intensiva
+2     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
+3     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
+4     ml   Lubriderm humectación diaria 946 ml   Lubriderm humectación diaria
 5     ml   Lubriderm humectación diaria 946 ml   Lubriderm humectación diaria
-6     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
+6     ml   Lubriderm humectación diaria 946 ml   Lubriderm humectación diaria
    comercio cantidad_total precio_cop precio_por_medida ranking
-1     Éxito            946      44070             46.59       1
-2     Éxito            400      34230             85.58       2
-3     Éxito            200      31350            156.75       3
-4 La Rebaja           1000      41700             41.70       1
-5     Éxito            946      46800             49.47       2
-6 Farmatodo           1000      55950             55.95       3</code></pre>
+1     Éxito            946      50850             53.75       1
+2 La Rebaja           1000      55600             55.60       2
+3 Farmatodo           1000      55950             55.95       3
+4 Farmatodo            946      69500             73.47       4
+5 La Rebaja            946      71200             75.26       5
+6     Éxito            946      72000             76.11       6</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  medida                              producto                          linea
-1      g Lubriderm reparación intensiva 946 ml Lubriderm reparación intensiva
-4     ml     Nivea hidratación express 1000 ml      Nivea hidratación express
-   comercio cantidad_total precio_cop precio_por_medida ranking
-1     Éxito            946      44070             46.59       1
-4 La Rebaja           1000      41700             41.70       1</code></pre>
+1     ml Lubriderm reparación intensiva 946 ml Lubriderm reparación intensiva
+  comercio cantidad_total precio_cop precio_por_medida ranking
+1    Éxito            946      50850             53.75       1</code></pre>
 </div>
 </div>
 <p>interpretacion: el comercio que tuvo el menor precio con respecto a la medida en gramos (<em>g</em>) y en presentacion de 946, fue el almacen Exito. Mientras que para la presentacion en militrios (<em>ml</em>) el comercio que tuvo menor precio fue LaRebaja.</p>
@@ -551,24 +542,24 @@ window.Quarto = {
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>                               producto precio_min precio_max diferencia_cop
-1 Lubriderm reparación intensiva 946 ml      44070      80600          36530
-2               Lubriderm FPS 15 400 ml      34230      54900          20670
-3   Lubriderm humectación diaria 400 ml      30555      46750          16195
-4   Lubriderm humectación diaria 946 ml      46800      71200          24400
-5     Nivea hidratación express 1000 ml      41700      55950          14250
-6               Lubriderm FPS 15 200 ml      31350      34900           3550
-7   Lubriderm humectación diaria 200 ml      27250      30100           2850
-8 Lubriderm humectación delicada 400 ml      43500      47100           3600
+1 Lubriderm reparación intensiva 946 ml      50850      81150          30300
+2   Lubriderm humectación diaria 400 ml      41800      46750           4950
+3               Lubriderm FPS 15 200 ml      31350      34900           3550
+4   Lubriderm humectación diaria 200 ml      27250      30100           2850
+5               Lubriderm FPS 15 400 ml      50600      54900           4300
+6 Lubriderm humectación delicada 400 ml      43500      47100           3600
+7   Lubriderm humectación diaria 946 ml      69500      72000           2500
+8     Nivea hidratación express 1000 ml      55600      55950            350
 9   Lubriderm humectación diaria 120 ml      19600      19650             50
   ahorro_pct       mas_barato  mas_caro
-1       45.3            Éxito La Rebaja
-2       37.7            Éxito La Rebaja
-3       34.6            Éxito Farmatodo
-4       34.3            Éxito La Rebaja
-5       25.5        La Rebaja Farmatodo
-6       10.2            Éxito Farmatodo
-7        9.5            Éxito Farmatodo
-8        7.6            Éxito La Rebaja
+1       37.3            Éxito Farmatodo
+2       10.6            Éxito Farmatodo
+3       10.2            Éxito Farmatodo
+4        9.5            Éxito Farmatodo
+5        7.8            Éxito La Rebaja
+6        7.6            Éxito La Rebaja
+7        3.5        Farmatodo     Éxito
+8        0.6        La Rebaja Farmatodo
 9        0.3 Éxito, La Rebaja Farmatodo</code></pre>
 </div>
 </div>
@@ -594,13 +585,13 @@ diferencia_{cop} = Pmax − Pmin
 6            comparables sin precio en la corrida de referencia (comercio x producto)
 7                                    ejecuciones (comercio) que no quedaron completas
    n total
-1 35   226
-2 25   226
-3 46   226
-4  0   226
+1 45   239
+2 33   239
+3 50   239
+4  0   239
 5  0    26
 6  1    27
-7  1     3</code></pre>
+7  2     6</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  comercio id_producto                          producto
@@ -618,10 +609,16 @@ diferencia_{cop} = Pmax − Pmin
 1 20261017230148 Farmatodo       119             52.7           9
 2 20261017230148     Éxito        67             29.6           8
 3 20261017230148 La Rebaja        40             17.7           9
+4 20261106221640 Farmatodo       120             50.8           9
+5 20261106221640     Éxito        77             32.6           8
+6 20261106221640 La Rebaja        39             16.5           9
   pct_con_descripcion pct_con_marca pct_con_contenido
 1                 100         100.0              89.9
 2                 100          47.8              80.6
-3                 100         100.0             100.0</code></pre>
+3                 100         100.0             100.0
+4                 100         100.0              90.0
+5                 100          41.6              72.7
+6                 100         100.0             100.0</code></pre>
 </div>
 </div>
 <p>interpretacion: De las dos ultimas ejecuciones se obtuvieron este numero de productos en cada uno de los comercios. El tamaño de la oferta es grande, siendo en algunos casos el doble de manera porcentual, por ejemplo los almacenes Farmatodo a Exito. En su mayoria de productos tienen descripcion y marca. El comerico que presenta menor porcentaje frente a la marca y contenido (cercano al 47%) de completitud de informacion es almacenes Exito.</p>
@@ -638,17 +635,17 @@ diferencia_{cop} = Pmax − Pmin
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>             linea                producto  comercio medida contenido
-1 Lubriderm FPS 15 Lubriderm FPS 15 200 ml     Éxito      g       200
-2 Lubriderm FPS 15 Lubriderm FPS 15 400 ml     Éxito      g       400
-3 Lubriderm FPS 15 Lubriderm FPS 15 200 ml La Rebaja     ml       200
-4 Lubriderm FPS 15 Lubriderm FPS 15 200 ml Farmatodo     ml       200
+1 Lubriderm FPS 15 Lubriderm FPS 15 200 ml     Éxito     ml       200
+2 Lubriderm FPS 15 Lubriderm FPS 15 200 ml La Rebaja     ml       200
+3 Lubriderm FPS 15 Lubriderm FPS 15 200 ml Farmatodo     ml       200
+4 Lubriderm FPS 15 Lubriderm FPS 15 400 ml     Éxito     ml       400
 5 Lubriderm FPS 15 Lubriderm FPS 15 400 ml Farmatodo     ml       400
 6 Lubriderm FPS 15 Lubriderm FPS 15 400 ml La Rebaja     ml       400
   precio_envase precio_por_unidad ranking_comercio
 1         31350            156.75                1
-2         34230             85.58                1
-3         34400            172.00                2
-4         34900            174.50                3
+2         34400            172.00                2
+3         34900            174.50                3
+4         50600            126.50                1
 5         51800            129.50                2
 6         54900            137.25                3</code></pre>
 </div>
@@ -741,10 +738,10 @@ diferencia_{cop} = Pmax − Pmin
 <li><strong>Líneas de producto.</strong> La línea se deriva del nombre quitando el contenido. Las presentaciones únicas (por ejemplo, “humectación delicada 400 ml” o Nivea 1000 ml) no tienen otro tamaño con el cual compararse.</li>
 <li><strong>Tamaño de la muestra.</strong> Con pocas presentaciones y una observación por precio no hay pruebas estadísticas; diferencias pequeñas (por ejemplo, de uno o dos puntos porcentuales) no deben leerse como diferencias firmes e inferenciales.</li>
 </ul>
-<p><strong>Dónde está el menor precio.</strong> En la ejecución 20261017230148, Éxito tiene el menor precio en 8 de 9 presentaciones comparables (los empates cuentan para cada comercio empatado).</p>
-<p><strong>Mayor diferencia entre comercios.</strong> Se da en <em>Lubriderm reparación intensiva 946 ml</em>: 45.3 % ($36.530) entre el comercio más barato y el más caro.</p>
+<p><strong>Dónde está el menor precio.</strong> En la ejecución 20261106221640, Éxito tiene el menor precio en 7 de 9 presentaciones comparables (los empates cuentan para cada comercio empatado).</p>
+<p><strong>Mayor diferencia entre comercios.</strong> Se da en <em>Lubriderm reparación intensiva 946 ml</em>: 37.3 % ($30.300) entre el comercio más barato y el más caro.</p>
 <p><strong>Envase frente a medida.</strong> De 6 combinaciones línea–comercio con más de un tamaño, en 6 el precio por ml <strong>baja</strong> al crecer el envase (pesa el costo por envase), en 0 <strong>se mantiene</strong> (el precio es proporcional a la medida) y en 0 <strong>sube</strong>. El precio del envase grande es mayor en 6 de 6 combinaciones; como el contenido también cambia, la conclusión útil para comparar es la del precio por ml.</p>
-<p><strong>Canasta comparable.</strong> Con 8 de 9 presentaciones presentes en todos los comercios, la canasta más barata es la de Éxito; la más cara cuesta 37.9 % más.</p>
+<p><strong>Canasta comparable.</strong> Con 8 de 9 presentaciones presentes en todos los comercios, la canasta más barata es la de Éxito; la más cara cuesta 13.5 % más.</p>
 </section>
 
 </main>
