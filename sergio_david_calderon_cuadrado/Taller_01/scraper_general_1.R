@@ -1,5 +1,3 @@
-# (El navegador ya NO se fija aqui: se detecta en [0b], y solo en MODO = "linea".)
-
 # =====================================================================
 #  SCRAPER UNICO:  EXITO + FARMATODO + LA REBAJA  ->  base comun  ->  productos comparables
 #
